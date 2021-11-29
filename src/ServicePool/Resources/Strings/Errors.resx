@@ -121,6 +121,8 @@
     <value>Cannot create a new instance of the requested service. Either:
 - The type's constructor requied unavailable services.
 - The type doesn't have any valid public constructors.
-- The type is not instantiable (static, abstract).</value>
+- The type is not instantiable (static, abstract).
+
+Try registering the service using an explicit factory, or with the RegisterNow(object?, bool)  method.</value>
   </data>
 </root>

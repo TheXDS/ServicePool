@@ -1,9 +1,30 @@
-﻿using System;
+﻿// ServicePool.cs
+//
+// This file is part of ServicePool
+//
+// Author(s):
+//      César Morgan <xds_xps_ivx@hotmail.com>
+//
+// Copyright (C) 2021 César Andrés Morgan
+//
+// ServicePool is free software: you can redistribute it and/or modify it under the
+// terms of the GNU General Public License as published by the Free Software
+// Foundation, either version 3 of the License, or (at your option) any later
+// version.
+//
+// ServicePool is distributed in the hope that it will be useful, but WITHOUT ANY
+// WARRANTY, without even the implied warranty of MERCHANTABILITY or FITNESS FOR A
+// PARTICULAR PURPOSE. See the GNU General Public License for more details.
+//
+// You should have received a copy of the GNU General Public License along with
+// this program. If not, see <http://www.gnu.org/licenses/>.
+
+using System;
 using System.Collections;
 using System.Collections.Generic;
-using System.Diagnostics.CodeAnalysis;
 using System.Linq;
 using System.Reflection;
+using TheXDS.ServicePool.Resources;
 
 namespace TheXDS.ServicePool
 {
@@ -14,21 +35,9 @@ namespace TheXDS.ServicePool
     public class ServicePool : IEnumerable
     {
         private record FactoryEntry(Type Key, bool Persistent, Func<object> Factory);
-        private class TypeComparer : IEqualityComparer<object>
-        {
-            public new bool Equals(object? x, object? y)
-            {
-                return x?.GetType().Equals(y?.GetType()) ?? y is null;
-            }
-
-            public int GetHashCode([DisallowNull] object obj)
-            {
-                return obj.GetType().GetHashCode();
-            }
-        }
 
         private readonly ICollection<FactoryEntry> _factories = new HashSet<FactoryEntry>();
-        private readonly ICollection<object> _singletons = new HashSet<object>(new TypeComparer());
+        private readonly ICollection<object> _singletons = new HashSet<object>();
 
         /// <summary>
         /// Gets the number of actively instanced singletons registered in the
@@ -142,8 +151,7 @@ namespace TheXDS.ServicePool
         /// </returns>
         public ServicePool RegisterIf<T>(bool condition, bool persistent = true) where T : notnull
         {
-            if (condition) Register<T>(persistent);
-            return this;
+            return condition ? Register<T>(persistent) : this;
         }
 
         /// <summary>
@@ -165,8 +173,7 @@ namespace TheXDS.ServicePool
         /// </returns>
         public ServicePool RegisterIf<T>(bool condition, Func<T> factory, bool persistent = true) where T : notnull
         {
-            if (condition) Register(factory, persistent);
-            return this;
+            return condition ? Register<T>(factory, persistent) : this;
         }
 
         /// <summary>
@@ -182,8 +189,7 @@ namespace TheXDS.ServicePool
         /// </returns>
         public ServicePool RegisterNowIf<T>(bool condition) where T : notnull
         {
-            if (condition) RegisterNow<T>();
-            return this;
+            return condition ? RegisterNow<T>() : this;
         }
 
         /// <summary>
@@ -198,8 +204,7 @@ namespace TheXDS.ServicePool
         /// </returns>
         public ServicePool RegisterNowIf(bool condition, object singleton)
         {
-            if (condition) RegisterNow(singleton);
-            return this;
+            return condition ? RegisterNow(singleton) : this;
         }
 
         /// <summary>
@@ -213,6 +218,23 @@ namespace TheXDS.ServicePool
         /// registered.
         /// </returns>
         public T? Resolve<T>() where T : notnull => (T?)Resolve(typeof(T));
+
+        /// <summary>
+        /// Resolves all services that match the requested type.
+        /// </summary>
+        /// <typeparam name="T">Type fo service to resolve.</typeparam>
+        /// <returns>
+        /// An enumeration of all the services (both eagerly and lazily
+        /// initialized) registered in the pool that implement the specified
+        /// type.
+        /// </returns>
+        public IEnumerable<T> ResolveAll<T>() where T : notnull
+        {
+            return _singletons.OfType<T>()
+                .Concat(GetLazyFactory(typeof(T))
+                .Where(p => p is not null)
+                .Select(CreateFromLazy).Cast<T>());
+        }
 
         /// <summary>
         /// Tries to resolve a registered service of type
@@ -233,9 +255,43 @@ namespace TheXDS.ServicePool
         /// requested type, or <see langword="null"/> in case that no
         /// discoverable service for the requested type exists.
         /// </returns>
+        /// <remarks>
+        /// When discovering new services, if a service of a specific type is
+        /// found inside the pool, it will be gracefully skipped and not
+        /// instanced again.
+        /// </remarks>
         public T? Discover<T>(bool persistent = true) where T : notnull
         {
-            return (T?)Discover(typeof(T), persistent).FirstOrDefault();
+            return Resolve(typeof(T)) is T o ? o : (T?)Discover(typeof(T), persistent).FirstOrDefault();
+        }
+
+        /// <summary>
+        /// Tries to resolve and register all services of type
+        /// <typeparamref name="T"/> found in the current app domain, returning
+        /// the resulting enumeration of all services found.
+        /// </summary>
+        /// <typeparam name="T">Type of service to get.</typeparam>
+        /// <param name="persistent">
+        /// If set to <see langword="true"/>, in case a service of the
+        /// specified type hasn't been registered and a compatible type has
+        /// been discovered, the newly created instance will be registered
+        /// persistently in the pool. If set to <see langword="false"/>, any
+        /// discovered service will not be added to the pool.
+        /// </param>
+        /// <returns>
+        /// A collection of all the services found in the current app domain,
+        /// or an empty enumeration in case that no discoverable service for
+        /// the requested type exists.
+        /// </returns>
+        /// <remarks>
+        /// The resulting enumeration will contain all registered services, and
+        /// the discovery will skip any discoverable service for which there's
+        /// a singleton with the same type or a compatible lazy factory
+        /// registered.
+        /// </remarks>
+        public IEnumerable<T> DiscoverAll<T>(bool persistent = true) where T : notnull
+        {
+            return ResolveAll<T>().Concat(Discover(typeof(T), persistent).Cast<T>());
         }
 
         /// <summary>
@@ -262,7 +318,7 @@ namespace TheXDS.ServicePool
         /// </returns>
         public bool Remove<T>()
         {
-            return ResolveActive(typeof(T)) is { } o ? Remove(o) : (GetLazyFactory(typeof(T)) is { } f && _factories.Remove(f));
+            return ResolveActive(typeof(T)) is { } o ? Remove(o) : (GetLazyFactory(typeof(T)).FirstOrDefault() is { } f && _factories.Remove(f));
         }
 
         /// <summary>
@@ -278,26 +334,27 @@ namespace TheXDS.ServicePool
         public T? Consume<T>() where T : notnull
         {
             T? obj = Resolve<T>();
-            if (obj is not null) Remove(obj);
+            if (obj is not null) _ = Remove(obj) || Remove<T>();
             return obj;
         }
 
         /// <inheritdoc/>
         public IEnumerator GetEnumerator()
         {
-            return ((IEnumerable)_singletons).GetEnumerator();
+            return ((IEnumerable)_singletons.Concat(_factories.Select(CreateFromLazy))).GetEnumerator();
         }
 
         private IEnumerable<object?> Discover(Type t, bool persistent)
         {
-            if (Resolve(t) is { } o) yield return o;
-            if (AppDomain.CurrentDomain.GetAssemblies()
-                .SelectMany(p => p.GetExportedTypes())
-                .FirstOrDefault(p => !p.IsAbstract && !p.IsInterface && t.IsAssignableFrom(p)) is Type dt
-                && CreateNewInstance(dt) is { } obj)
+            foreach (Type dt in AppDomain.CurrentDomain.GetAssemblies()
+                .SelectMany(p => p.GetTypes())
+                .Where(p => !p.IsAbstract && !p.IsInterface && t.IsAssignableFrom(p)))
             {
-                if (persistent) RegisterNow(obj);
-                yield return obj;
+                if (Resolve(dt) is null && CreateNewInstance(dt) is { } obj)
+                {
+                    if (persistent) RegisterNow(obj);
+                    yield return obj;
+                }
             }
         }
 
@@ -311,13 +368,14 @@ namespace TheXDS.ServicePool
                 List<object> args = new();
                 foreach (ParameterInfo arg in pars)
                 {
+                    if (t.IsAssignableFrom(arg.ParameterType)) break;
                     var value = Resolve(arg.ParameterType) ?? (arg.IsOptional ? Type.Missing : null);
                     if (value is null) break;
                     args.Add(value);
                 }
                 if (args.Count == pars.Length)
                 {
-                    return ctor.Invoke(args.ToArray());                    
+                    return ctor.Invoke(args.ToArray());
                 }
             }
             return null;
@@ -325,7 +383,7 @@ namespace TheXDS.ServicePool
 
         private T CreateNewInstance<T>()
         {
-            return (T)(CreateNewInstance(typeof(T)) ?? throw new InvalidOperationException(Resources.Strings.Errors.CantInstance));
+            return (T)(CreateNewInstance(typeof(T)) ?? throw Errors.CantInstance());
         }
 
         private object? Resolve(Type serviceType)
@@ -340,22 +398,25 @@ namespace TheXDS.ServicePool
 
         private object? ResolveLazy(Type serviceType)
         {
-            if (GetLazyFactory(serviceType) is { Factory: { } factMethod, Persistent: { } persistent } factory)
-            {
-                var obj = factMethod.Invoke();
-                if (persistent)
-                {
-                    _factories.Remove(factory);
-                    RegisterNow(obj);
-                }
-                return obj;
-            }
-            return null;
+            return GetLazyFactory(serviceType).FirstOrDefault() is { } factory
+                ? CreateFromLazy(factory)
+                : null;
         }
 
-        private FactoryEntry? GetLazyFactory(Type serviceType)
+        private object CreateFromLazy(FactoryEntry factory)
         {
-            return _factories.FirstOrDefault(p => serviceType.IsAssignableFrom(p.Key));
+            var obj = factory.Factory.Invoke();
+            if (factory.Persistent)
+            {
+                _factories.Remove(factory);
+                RegisterNow(obj);
+            }
+            return obj;
+        }
+
+        private IEnumerable<FactoryEntry> GetLazyFactory(Type serviceType)
+        {
+            return _factories.Where(p => serviceType.IsAssignableFrom(p.Key));
         }
     }
 }

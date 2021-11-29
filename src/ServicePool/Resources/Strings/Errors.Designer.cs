@@ -64,7 +64,9 @@ namespace TheXDS.ServicePool.Resources.Strings {
         ///   Busca una cadena traducida similar a Cannot create a new instance of the requested service. Either:
         ///- The type&apos;s constructor requied unavailable services.
         ///- The type doesn&apos;t have any valid public constructors.
-        ///- The type is not instantiable (static, abstract)..
+        ///- The type is not instantiable (static, abstract).
+        ///
+        ///Try registering the service using an explicit factory, or with the RegisterNow(object?, bool)  method..
         /// </summary>
         internal static string CantInstance {
             get {
