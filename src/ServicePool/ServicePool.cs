@@ -30,34 +30,45 @@ namespace TheXDS.ServicePool
         private readonly ICollection<FactoryEntry> _factories = new HashSet<FactoryEntry>();
         private readonly ICollection<object> _singletons = new HashSet<object>(new TypeComparer());
 
+        /// <summary>
+        /// Gets the number of actively instanced singletons registered in the
+        /// pool.
+        /// </summary>
         public int ActiveCount => _singletons.Count;
-        public int Count => ActiveCount + _factories.Count;
-        
 
         /// <summary>
-        /// registers a lazily-instanced singleton.
+        /// Gets a count of all the registered services in this pool.
+        /// </summary>
+        public int Count => ActiveCount + _factories.Count;
+
+        /// <summary>
+        /// Registers a lazily-instanced singleton.
         /// </summary>
         /// <typeparam name="T">Type of service to register.</typeparam>
         /// <param name="persistent">
         /// If set to <see langword="true"/>, the resolved singleton is going
-        /// to be persisted in the service pool.
+        /// to be persisted in the service pool. When <see langword="false"/>,
+        /// the registered service will be instanced and initialized each time
+        /// it is requested.
         /// </param>
         /// <returns>
         /// This same service pool instance, allowing the use of Fluent syntax.
         /// </returns>
-        public ServicePool Register<T>(bool persistent = true) where T : notnull, new()
+        public ServicePool Register<T>(bool persistent = true) where T : notnull
         {
             return Register(CreateNewInstance<T>, persistent);
         }
 
         /// <summary>
-        /// registers a lazily-instanced singleton.
+        /// Registers a lazily-instanced singleton.
         /// </summary>
         /// <typeparam name="T">Type of service to register.</typeparam>
         /// <param name="factory">Singleton factory to use.</param>
         /// <param name="persistent">
         /// If set to <see langword="true"/>, the resolved singleton is going
-        /// to be persisted in the service pool.
+        /// to be persisted in the service pool. When <see langword="false"/>,
+        /// the registered service will be instanced and initialized each time
+        /// it is requested.
         /// </param>
         /// <returns>
         /// This same service pool instance, allowing the use of Fluent syntax.
@@ -65,6 +76,24 @@ namespace TheXDS.ServicePool
         public ServicePool Register<T>(Func<T> factory, bool persistent = true) where T : notnull
         {
             _factories.Add(new(typeof(T), persistent, () => factory()));
+            return this;
+        }
+
+        /// <summary>
+        /// Initializes all registered services marked as persistent using
+        /// their respective registered factories.
+        /// </summary>
+        /// <returns>
+        /// This same service pool instance, allowing the use of Fluent syntax.
+        /// </returns>
+        public ServicePool InitNow()
+        {
+            FactoryEntry[] entries = _factories.Where(p => p.Persistent).ToArray();
+            foreach (FactoryEntry entry in entries)
+            {
+                RegisterNow(entry.Factory());
+                _factories.Remove(entry);
+            }
             return this;
         }
 
@@ -95,6 +124,52 @@ namespace TheXDS.ServicePool
         }
 
         /// <summary>
+        /// Registers a lazily-instanced singleton of type
+        /// <typeparamref name="T"/> if the condition is true.
+        /// </summary>
+        /// <typeparam name="T">Type of service to register.</typeparam>
+        /// <param name="condition">
+        /// Determines if the service will be added to this pool.
+        /// </param>
+        /// <param name="persistent">
+        /// If set to <see langword="true"/>, the resolved singleton is going
+        /// to be persisted in the service pool. When <see langword="false"/>,
+        /// the registered service will be instanced and initialized each time
+        /// it is requested.
+        /// </param>
+        /// <returns>
+        /// This same service pool instance, allowing the use of Fluent syntax.
+        /// </returns>
+        public ServicePool RegisterIf<T>(bool condition, bool persistent = true) where T : notnull
+        {
+            if (condition) Register<T>(persistent);
+            return this;
+        }
+
+        /// <summary>
+        /// Registers a lazily-instanced singleton of type
+        /// <typeparamref name="T"/> if the condition is true.
+        /// </summary>
+        /// <param name="condition">
+        /// Determines if the service will be added to this pool.
+        /// </param>
+        /// <param name="factory">Singleton factory to use.</param>
+        /// <param name="persistent">
+        /// If set to <see langword="true"/>, the resolved singleton is going
+        /// to be persisted in the service pool. When <see langword="false"/>,
+        /// the registered service will be instanced and initialized each time
+        /// it is requested.
+        /// </param>
+        /// <returns>
+        /// This same service pool instance, allowing the use of Fluent syntax.
+        /// </returns>
+        public ServicePool RegisterIf<T>(bool condition, Func<T> factory, bool persistent = true) where T : notnull
+        {
+            if (condition) Register(factory, persistent);
+            return this;
+        }
+
+        /// <summary>
         /// Instances and registers a new service of type
         /// <typeparamref name="T"/> if the condition is true.
         /// </summary>
@@ -112,8 +187,7 @@ namespace TheXDS.ServicePool
         }
 
         /// <summary>
-        /// Instances and registers a new service of type
-        /// <typeparamref name="T"/> if the condition is true.
+        /// Instances and registers a new service if the condition is true.
         /// </summary>
         /// <param name="condition">
         /// Determines if the service will be added to this pool.
@@ -128,7 +202,6 @@ namespace TheXDS.ServicePool
             return this;
         }
 
-
         /// <summary>
         /// Tries to resolve a service that implements the specified interface 
         /// or base type.
@@ -141,50 +214,91 @@ namespace TheXDS.ServicePool
         /// </returns>
         public T? Resolve<T>() where T : notnull => (T?)Resolve(typeof(T));
 
-        public T? ResolveActive<T>() where T : notnull => (T?)ResolveActive(typeof(T));
-
-        public T? ResolveLazy<T>() where T : notnull => (T?)ResolveLazy(typeof(T));
-
+        /// <summary>
+        /// Tries to resolve a registered service of type
+        /// <typeparamref name="T"/>, and if not found, searches for any type
+        /// in the app domain that can be instanced and returned as the
+        /// requested service.
+        /// </summary>
+        /// <typeparam name="T">Type of service to get.</typeparam>
+        /// <param name="persistent">
+        /// If set to <see langword="true"/>, in case a service of the
+        /// specified type hasn't been registered and a compatible type has
+        /// been discovered, the newly created instance will be registered
+        /// persistently in the pool. If set to <see langword="false"/>, the
+        /// discovered service will not be added to the pool.
+        /// </param>
+        /// <returns>
+        /// A registered service or a newly discovered one if it implements the
+        /// requested type, or <see langword="null"/> in case that no
+        /// discoverable service for the requested type exists.
+        /// </returns>
         public T? Discover<T>(bool persistent = true) where T : notnull
         {
-            if (Resolve(typeof(T)) is T o) return o;
-
-            foreach (var t in AppDomain.CurrentDomain.GetAssemblies().SelectMany(p => p.GetExportedTypes()).Where(p => !p.IsAbstract && !p.IsInterface))
-            {
-                if (typeof(T).IsAssignableFrom(t))
-                {
-                    var obj =  CreateNewInstance<T>();
-                    if (persistent) RegisterNow(obj);
-                    return obj;
-                }
-            }
-            return default;
+            return (T?)Discover(typeof(T), persistent).FirstOrDefault();
         }
-
-
-
-
 
         /// <summary>
         /// Removes a singleton from this service pool.
         /// </summary>
-        /// <param name="service"></param>
+        /// <param name="service">Service instance to remove.</param>
+        /// <returns>
+        /// <see langword="true"/> if the service instance was found and
+        /// removed from the pool, <see langword="false"/> otherwise.
+        /// </returns>
         public bool Remove(object service)
         {
             return _singletons.Remove(service);
         }
 
+        /// <summary>
+        /// Removes a registered service from this service pool.
+        /// </summary>
+        /// <typeparam name="T">Type of service to remove.</typeparam>
+        /// <returns>
+        /// <see langword="true"/> if a registered service matching the
+        /// requested type was found and removed from the pool,
+        /// <see langword="false"/> otherwise.
+        /// </returns>
+        public bool Remove<T>()
+        {
+            return ResolveActive(typeof(T)) is { } o ? Remove(o) : (GetLazyFactory(typeof(T)) is { } f && _factories.Remove(f));
+        }
 
-
-
-
-
-
+        /// <summary>
+        /// Resolves and then removes a registered service from this service
+        /// pool.
+        /// </summary>
+        /// <typeparam name="T">Type of service to consume.</typeparam>
+        /// <returns>
+        /// The first service that implements <typeparamref name="T"/> found on
+        /// the pool, or <see langword="null"/> if no such service has been
+        /// registered.
+        /// </returns>
+        public T? Consume<T>() where T : notnull
+        {
+            T? obj = Resolve<T>();
+            if (obj is not null) Remove(obj);
+            return obj;
+        }
 
         /// <inheritdoc/>
         public IEnumerator GetEnumerator()
         {
             return ((IEnumerable)_singletons).GetEnumerator();
+        }
+
+        private IEnumerable<object?> Discover(Type t, bool persistent)
+        {
+            if (Resolve(t) is { } o) yield return o;
+            if (AppDomain.CurrentDomain.GetAssemblies()
+                .SelectMany(p => p.GetExportedTypes())
+                .FirstOrDefault(p => !p.IsAbstract && !p.IsInterface && t.IsAssignableFrom(p)) is Type dt
+                && CreateNewInstance(dt) is { } obj)
+            {
+                if (persistent) RegisterNow(obj);
+                yield return obj;
+            }
         }
 
         private object? CreateNewInstance(Type t)
@@ -226,7 +340,7 @@ namespace TheXDS.ServicePool
 
         private object? ResolveLazy(Type serviceType)
         {
-            if (_factories.FirstOrDefault(p => serviceType.IsAssignableFrom(p.Key)) is { Factory: { } factMethod, Persistent: { } persistent } factory)
+            if (GetLazyFactory(serviceType) is { Factory: { } factMethod, Persistent: { } persistent } factory)
             {
                 var obj = factMethod.Invoke();
                 if (persistent)
@@ -238,43 +352,10 @@ namespace TheXDS.ServicePool
             }
             return null;
         }
-    }
 
-    /// <summary>
-    /// Encapsulates a short-lived singleton, instanced only after being
-    /// required from the Service Pool and destroyed when no longer needed.
-    /// </summary>
-    /// <typeparam name="T"></typeparam>
-    public sealed class DisposableSingleton<T> : IDisposable where T : notnull
-    {
-        private readonly ServicePool pool;
-
-        internal DisposableSingleton(T instance, ServicePool pool)
+        private FactoryEntry? GetLazyFactory(Type serviceType)
         {
-            Instance = instance;
-            this.pool = pool;
-        }
-
-        /// <summary>
-        /// Gets a reference to the instance requested from the service pool.
-        /// </summary>
-        public T Instance { get; }
-
-        /// <inheritdoc/>
-        public void Dispose()
-        {
-            (Instance as IDisposable)?.Dispose();
-            pool.Remove(Instance);
-        }
-
-        /// <summary>
-        /// Implicitly converts a <see cref="DisposableSingleton{T}"/> to a 
-        /// <typeparamref name="T"/>.
-        /// </summary>
-        /// <param name="disposableSingleton">Object to convert.</param>
-        public static implicit operator T(DisposableSingleton<T> disposableSingleton)
-        {
-            return disposableSingleton.Instance;
+            return _factories.FirstOrDefault(p => serviceType.IsAssignableFrom(p.Key));
         }
     }
 }
