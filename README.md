@@ -22,7 +22,7 @@ paket add TheXDS.ServicePool
 <PackageReference Include="TheXDS.ServicePool" Version="0.1.0" />
 ```
 
-** C# interactive window (CSI)**  
+**C# interactive window (CSI)**  
 ```
 #r "nuget: TheXDS.ServicePool, 0.1.0"
 ```
