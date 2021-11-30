@@ -17,12 +17,12 @@ dotnet add package TheXDS.ServicePool
 paket add TheXDS.ServicePool
 ```
 
-**Referencia de paquete**  
+**Package reference**  
 ```xml
 <PackageReference Include="TheXDS.ServicePool" Version="0.1.0" />
 ```
 
-**Ventana interactiva (CSI)**  
+** C# interactive window (CSI)**  
 ```
 #r "nuget: TheXDS.ServicePool, 0.1.0"
 ```
