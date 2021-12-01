@@ -3,7 +3,7 @@
 // This file is part of ServicePool
 //
 // Author(s):
-//      César Morgan <xds_xps_ivx@hotmail.com>
+//      César Andrés Morgan <xds_xps_ivx@hotmail.com>
 //
 // Copyright (C) 2021 César Andrés Morgan
 //
@@ -34,6 +34,21 @@ namespace TheXDS.ServicePool
     /// </summary>
     public class ServicePool : IEnumerable
     {
+        private static ServicePool? _commonPool;
+
+        /// <summary>
+        /// Gets a static reference to a common service pool.
+        /// </summary>
+        /// <remarks>
+        /// This property will instance the static pool upon it being accessed
+        /// for the first time, and the pool will live throughout the lifespan
+        /// of the application.
+        /// </remarks>
+        public static ServicePool CommonPool
+        {
+            get => _commonPool ??= new();
+        }
+
         private record FactoryEntry(Type Key, bool Persistent, Func<object> Factory);
 
         private readonly ICollection<FactoryEntry> _factories = new HashSet<FactoryEntry>();
@@ -262,7 +277,38 @@ namespace TheXDS.ServicePool
         /// </remarks>
         public T? Discover<T>(bool persistent = true) where T : notnull
         {
-            return Resolve(typeof(T)) is T o ? o : (T?)Discover(typeof(T), persistent).FirstOrDefault();
+            return Discover<T>(new DefaultDiscoveryEngine(), persistent);
+        }
+
+        /// <summary>
+        /// Tries to resolve a registered service of type
+        /// <typeparamref name="T"/>, and if not found, searches for any type
+        /// that can be instanced and returned as the requested service.
+        /// </summary>
+        /// <typeparam name="T">Type of service to get.</typeparam>
+        /// <param name="discoveryEngine">
+        /// Discovery engine to use while searching for new instantiable types.
+        /// </param>
+        /// <param name="persistent">
+        /// If set to <see langword="true"/>, in case a service of the
+        /// specified type hasn't been registered and a compatible type has
+        /// been discovered, the newly created instance will be registered
+        /// persistently in the pool. If set to <see langword="false"/>, the
+        /// discovered service will not be added to the pool.
+        /// </param>
+        /// <returns>
+        /// A registered service or a newly discovered one if it implements the
+        /// requested type, or <see langword="null"/> in case that no
+        /// discoverable service for the requested type exists.
+        /// </returns>
+        /// <remarks>
+        /// When discovering new services, if a service of a specific type is
+        /// found inside the pool, it will be gracefully skipped and not
+        /// instanced again.
+        /// </remarks>
+        public T? Discover<T>(IDiscoveryEngine discoveryEngine, bool persistent = true) where T : notnull
+        {
+            return Resolve(typeof(T)) is T o ? o : (T?)Discover(discoveryEngine, typeof(T), persistent).FirstOrDefault();
         }
 
         /// <summary>
@@ -291,7 +337,40 @@ namespace TheXDS.ServicePool
         /// </remarks>
         public IEnumerable<T> DiscoverAll<T>(bool persistent = true) where T : notnull
         {
-            return ResolveAll<T>().Concat(Discover(typeof(T), persistent).Cast<T>());
+            return DiscoverAll<T>(new DefaultDiscoveryEngine(), persistent);
+        }
+
+        /// <summary>
+        /// Tries to resolve and register all services of type
+        /// <typeparamref name="T"/> found using the specified
+        /// <see cref="IDiscoveryEngine"/>, returning the resulting enumeration
+        /// of all services found.
+        /// </summary>
+        /// <typeparam name="T">Type of service to get.</typeparam>
+        /// <param name="discoveryEngine">
+        /// Discovery engine to use while searching for new instantiable types.
+        /// </param>
+        /// <param name="persistent">
+        /// If set to <see langword="true"/>, in case a service of the
+        /// specified type hasn't been registered and a compatible type has
+        /// been discovered, the newly created instance will be registered
+        /// persistently in the pool. If set to <see langword="false"/>, any
+        /// discovered service will not be added to the pool.
+        /// </param>
+        /// <returns>
+        /// A collection of all the services found in the current app domain,
+        /// or an empty enumeration in case that no discoverable service for
+        /// the requested type exists.
+        /// </returns>
+        /// <remarks>
+        /// The resulting enumeration will contain all registered services, and
+        /// the discovery will skip any discoverable service for which there's
+        /// a singleton with the same type or a compatible lazy factory
+        /// registered.
+        /// </remarks>
+        public IEnumerable<T> DiscoverAll<T>(IDiscoveryEngine discoveryEngine, bool persistent = true) where T : notnull
+        {
+            return ResolveAll<T>().Concat(Discover(discoveryEngine, typeof(T), persistent).Cast<T>());
         }
 
         /// <summary>
@@ -344,11 +423,9 @@ namespace TheXDS.ServicePool
             return ((IEnumerable)_singletons.Concat(_factories.Select(CreateFromLazy))).GetEnumerator();
         }
 
-        private IEnumerable<object?> Discover(Type t, bool persistent)
+        private IEnumerable<object?> Discover(IDiscoveryEngine discoveryEngine, Type t, bool persistent)
         {
-            foreach (Type dt in AppDomain.CurrentDomain.GetAssemblies()
-                .SelectMany(p => p.GetTypes())
-                .Where(p => !p.IsAbstract && !p.IsInterface && t.IsAssignableFrom(p)))
+            foreach (Type dt in discoveryEngine.Discover(t))
             {
                 if (Resolve(dt) is null && CreateNewInstance(dt) is { } obj)
                 {

@@ -65,6 +65,7 @@ namespace TheXDS.ServicePool.Resources.Strings {
         ///- The type&apos;s constructor requied unavailable services.
         ///- The type doesn&apos;t have any valid public constructors.
         ///- The type is not instantiable (static, abstract).
+        ///- A constructor was found, but it required arguments that caused a circular service reference.
         ///
         ///Try registering the service using an explicit factory, or with the RegisterNow(object?, bool)  method..
         /// </summary>

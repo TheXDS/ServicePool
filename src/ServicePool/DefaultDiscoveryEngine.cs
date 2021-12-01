@@ -1,4 +1,4 @@
-﻿// Errors.cs
+﻿// DefaultDiscoveryEngine.cs
 //
 // This file is part of ServicePool
 //
@@ -20,15 +20,26 @@
 // this program. If not, see <http://www.gnu.org/licenses/>.
 
 using System;
-using Ers = TheXDS.ServicePool.Resources.Strings.Errors;
+using System.Collections.Generic;
+using System.Linq;
 
-namespace TheXDS.ServicePool.Resources
+namespace TheXDS.ServicePool
 {
-    internal static class Errors
+    /// <summary>
+    /// Implements a <see cref="IDiscoveryEngine"/> that searches for types in 
+    /// the current <see cref="AppDomain"/>.
+    /// </summary>
+    /// <remarks>
+    /// This <see cref="IDiscoveryEngine"/> is used by default by <see cref="ServicePool.Discover{T}(bool)"/> and <see cref="ServicePool.DiscoverAll{T}(bool)"/>.
+    /// </remarks>
+    public class DefaultDiscoveryEngine : IDiscoveryEngine
     {
-        public static InvalidOperationException CantInstance()
+        /// <inheritdoc/>
+        public IEnumerable<Type> Discover(Type t)
         {
-            return new InvalidOperationException(Ers.CantInstance);
+            return AppDomain.CurrentDomain.GetAssemblies()
+                .SelectMany(p => p.GetTypes())
+                .Where(p => !p.IsAbstract && !p.IsInterface && t.IsAssignableFrom(p));
         }
     }
 }

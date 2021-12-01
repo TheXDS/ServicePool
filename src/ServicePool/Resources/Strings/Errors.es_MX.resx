@@ -118,12 +118,12 @@
     <value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
   </resheader>
   <data name="CantInstance" xml:space="preserve">
-    <value>Cannot create a new instance of the requested service. Either:
-- The type's constructor requied unavailable services.
-- The type doesn't have any valid public constructors.
-- The type is not instantiable (static, abstract).
-- A constructor was found, but it required arguments that caused a circular service reference.
+    <value>No se pudo crear una nueva instancia del servicio solicitado. Esto puede deberse a que:
+- El constructor del tipo requiere servicios no disponibles.
+- El tipo no contiene ningún constructor válido.
+- El tipo no es instanciable (estático, abstracto).
+- Se encontró un constructor, pero requiere de argumentos que causan una referencia circular de servicios.
 
-Try registering the service using an explicit factory, or with the RegisterNow(object?, bool)  method.</value>
+Intente registrar el servicio utilizando una fábrica explícita, o llamando al método RegisterNow(object?, bool).</value>
   </data>
 </root>
