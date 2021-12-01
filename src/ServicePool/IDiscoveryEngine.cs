@@ -1,4 +1,4 @@
-﻿// Errors.cs
+﻿// IDiscoveryEngine.cs
 //
 // This file is part of ServicePool
 //
@@ -20,15 +20,25 @@
 // this program. If not, see <http://www.gnu.org/licenses/>.
 
 using System;
-using Ers = TheXDS.ServicePool.Resources.Strings.Errors;
+using System.Collections.Generic;
 
-namespace TheXDS.ServicePool.Resources
+namespace TheXDS.ServicePool
 {
-    internal static class Errors
+    /// <summary>
+    /// Defines a series of methods to be implemented by a type that aids in
+    /// the discovery of instantiable types for a service pool.
+    /// </summary>
+    public interface IDiscoveryEngine
     {
-        public static InvalidOperationException CantInstance()
-        {
-            return new InvalidOperationException(Ers.CantInstance);
-        }
+        /// <summary>
+        /// Enumerates a series of types that implement, inherit or can be cast
+        /// to the specified type.
+        /// </summary>
+        /// <param name="t">Base type to discover types for.</param>
+        /// <returns>
+        /// An enumeration of all types that implement, inherit or otherwise
+        /// can be cast to the specified type discovered by this engine.
+        /// </returns>
+        IEnumerable<Type> Discover(Type t);
     }
 }
