@@ -15,7 +15,7 @@ Latest development release: | [![Latest development NuGet package](https://build
 
 **Package Manager**  
 ```sh
-PM> Install-Package TheXDS.ServicePool
+Install-Package TheXDS.ServicePool
 ```
 
 **.NET CLI**  
