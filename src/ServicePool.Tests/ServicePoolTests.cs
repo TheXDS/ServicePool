@@ -1,11 +1,11 @@
-// ServicePoolTests.cs
+ï»¿// ServicePoolTests.cs
 //
 // This file is part of ServicePool
 //
 // Author(s):
-//      César Andrés Morgan <xds_xps_ivx@hotmail.com>
+//      CÃ©sar AndrÃ©s Morgan <xds_xps_ivx@hotmail.com>
 //
-// Copyright (C) 2021 César Andrés Morgan
+// Copyright (C) 2021 CÃ©sar AndrÃ©s Morgan
 //
 // ServicePool is free software: you can redistribute it and/or modify it under the
 // terms of the GNU General Public License as published by the Free Software
@@ -23,8 +23,10 @@
 
 using NUnit.Framework;
 using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
+using System.Diagnostics.CodeAnalysis;
 using System.Linq;
 
 namespace TheXDS.ServicePool.Tests
@@ -36,12 +38,12 @@ namespace TheXDS.ServicePool.Tests
         {
             ServicePool? pool = new();
             Assert.AreSame(pool, pool.Register<Random>());
-            Assert.AreSame(pool, pool.Register(() => new Exception()));
+            Assert.AreSame(pool, pool.Register(DummyFactory));
             Assert.AreSame(pool, pool.InitNow());
             Assert.AreSame(pool, pool.RegisterNow<EventArgs>());
             Assert.AreSame(pool, pool.RegisterNow(new object()));
             Assert.AreSame(pool, pool.RegisterIf<Guid>(false));
-            Assert.AreSame(pool, pool.RegisterIf(false, () => new Exception()));
+            Assert.AreSame(pool, pool.RegisterIf(false, DummyFactory));
             Assert.AreSame(pool, pool.RegisterNowIf<EventArgs>(false));
             Assert.AreSame(pool, pool.RegisterNowIf(false, new object()));
         }
@@ -141,9 +143,9 @@ namespace TheXDS.ServicePool.Tests
             Assert.Zero(pool.Count);
             pool.RegisterIf<Random>(true);
             Assert.AreEqual(1, pool.Count);
-            pool.RegisterIf(false, () => new Exception());
+            pool.RegisterIf(false, DummyFactory);
             Assert.AreEqual(1, pool.Count);
-            pool.RegisterIf(true, () => new Exception());
+            pool.RegisterIf(true, DummyFactory);
             Assert.AreEqual(2, pool.Count);
         }
 
@@ -234,11 +236,74 @@ namespace TheXDS.ServicePool.Tests
             Assert.Null(pool.Consume<Test1>());
         }
 
+        [Test]
+        public void Enumerator_includes_lazy_and_eager_items()
+        {
+            ServicePool pool = new();
+            pool.RegisterNow<Test1>().Register<Test2>();
+
+            IEnumerator e = pool.GetEnumerator();
+            Assert.IsInstanceOf<IEnumerator>(e);
+            int c = 0;
+            while (e.MoveNext())
+            {
+                Assert.IsInstanceOf<ITest>(e.Current);
+                c++;
+            }
+            Assert.AreEqual(2, c);
+        }
+
+        [Test]
+        public void Common_ServicePool_exists()
+        {
+            Assert.IsAssignableFrom<ServicePool>(ServicePool.CommonPool);
+            ServicePool pool = ServicePool.CommonPool;
+            Assert.AreSame(pool, ServicePool.CommonPool);
+        }
+
+        [Test]
+        public void ServicePool_throws_error_on_invalid_registrations()
+        {
+            ServicePool pool = new();
+            Assert.Catch<InvalidOperationException>(() => pool.RegisterNow<ITest>());
+            Assert.Catch<InvalidOperationException>(() => pool.RegisterNow<AbstractTest>());
+        }
+
+        [Test]
+        public void ServicePool_throws_error_on_uninstantiable_class()
+        {
+            ServicePool pool = new();
+            pool.Register(() => 3);
+            Assert.Catch<InvalidOperationException>(() => pool.RegisterNow<UninstantiableTest>());
+        }
+
         private interface ITest
         {
+            [ExcludeFromCodeCoverage]
             void Test();
         }
 
+        [ExcludeFromCodeCoverage]
+        private static object DummyFactory()
+        {
+            return new object();
+        }
+
+        [ExcludeFromCodeCoverage]
+        private abstract class AbstractTest : ITest
+        {
+            public abstract void Test();
+        }
+
+        [ExcludeFromCodeCoverage]
+        private class UninstantiableTest
+        {
+            public UninstantiableTest(int x, Exception y, Guid z, IEnumerator a)
+            {
+            }
+        }
+
+        [ExcludeFromCodeCoverage]
         private class Test1 : ITest
         {
             public void Test()
@@ -247,6 +312,7 @@ namespace TheXDS.ServicePool.Tests
             }
         }
 
+        [ExcludeFromCodeCoverage]
         private class Test2 : ITest
         {
             void ITest.Test()

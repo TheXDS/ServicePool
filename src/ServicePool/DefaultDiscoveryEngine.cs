@@ -30,7 +30,9 @@ namespace TheXDS.ServicePool
     /// the current <see cref="AppDomain"/>.
     /// </summary>
     /// <remarks>
-    /// This <see cref="IDiscoveryEngine"/> is used by default by <see cref="ServicePool.Discover{T}(bool)"/> and <see cref="ServicePool.DiscoverAll{T}(bool)"/>.
+    /// This <see cref="IDiscoveryEngine"/> is used by default by
+    /// <see cref="ServicePool.Discover{T}(bool)"/> and
+    /// <see cref="ServicePool.DiscoverAll{T}(bool)"/>.
     /// </remarks>
     public class DefaultDiscoveryEngine : IDiscoveryEngine
     {

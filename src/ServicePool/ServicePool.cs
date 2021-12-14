@@ -247,7 +247,6 @@ namespace TheXDS.ServicePool
         {
             return _singletons.OfType<T>()
                 .Concat(GetLazyFactory(typeof(T))
-                .Where(p => p is not null)
                 .Select(CreateFromLazy).Cast<T>());
         }
 
@@ -445,8 +444,9 @@ namespace TheXDS.ServicePool
                 List<object> args = new();
                 foreach (ParameterInfo arg in pars)
                 {
-                    if (t.IsAssignableFrom(arg.ParameterType)) break;
-                    var value = Resolve(arg.ParameterType) ?? (arg.IsOptional ? Type.Missing : null);
+                    var value =
+                        (t.IsAssignableFrom(arg.ParameterType) ? ResolveActive(arg.ParameterType) : Resolve(arg.ParameterType)) ??
+                        (arg.IsOptional ? Type.Missing : null);
                     if (value is null) break;
                     args.Add(value);
                 }
