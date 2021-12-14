@@ -19,12 +19,12 @@ paket add TheXDS.ServicePool
 
 **Package reference**  
 ```xml
-<PackageReference Include="TheXDS.ServicePool" Version="0.1.0" />
+<PackageReference Include="TheXDS.ServicePool" Version="1.0.0" />
 ```
 
 **C# interactive window (CSI)**  
 ```
-#r "nuget: TheXDS.ServicePool, 0.1.0"
+#r "nuget: TheXDS.ServicePool, 1.0.0"
 ```
 
 ## Building
