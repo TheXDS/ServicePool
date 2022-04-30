@@ -29,7 +29,7 @@ using TheXDS.ServicePool.Resources;
 namespace TheXDS.ServicePool
 {
     /// <summary>
-    /// Represents a collection of hosted services that can be instanced and 
+    /// Represents a collection of hosted services that can be instantiated and 
     /// resolved using dependency injection.
     /// </summary>
     public class ServicePool : IEnumerable
@@ -40,7 +40,7 @@ namespace TheXDS.ServicePool
         /// Gets a static reference to a common service pool.
         /// </summary>
         /// <remarks>
-        /// This property will instance the static pool upon it being accessed
+        /// This property will instantiate the static pool upon it being accessed
         /// for the first time, and the pool will live throughout the lifespan
         /// of the application.
         /// </remarks>
@@ -55,7 +55,7 @@ namespace TheXDS.ServicePool
         private readonly ICollection<object> _singletons = new HashSet<object>();
 
         /// <summary>
-        /// Gets the number of actively instanced singletons registered in the
+        /// Gets the number of actively instantiated singletons registered in the
         /// pool.
         /// </summary>
         public int ActiveCount => _singletons.Count;
@@ -66,13 +66,13 @@ namespace TheXDS.ServicePool
         public int Count => ActiveCount + _factories.Count;
 
         /// <summary>
-        /// Registers a lazily-instanced singleton.
+        /// Registers a lazily-instantiated singleton.
         /// </summary>
         /// <typeparam name="T">Type of service to register.</typeparam>
         /// <param name="persistent">
         /// If set to <see langword="true"/>, the resolved singleton is going
         /// to be persisted in the service pool. When <see langword="false"/>,
-        /// the registered service will be instanced and initialized each time
+        /// the registered service will be instantiated and initialized each time
         /// it is requested.
         /// </param>
         /// <returns>
@@ -84,14 +84,14 @@ namespace TheXDS.ServicePool
         }
 
         /// <summary>
-        /// Registers a lazily-instanced singleton.
+        /// Registers a lazily-instantiated singleton.
         /// </summary>
         /// <typeparam name="T">Type of service to register.</typeparam>
         /// <param name="factory">Singleton factory to use.</param>
         /// <param name="persistent">
         /// If set to <see langword="true"/>, the resolved singleton is going
         /// to be persisted in the service pool. When <see langword="false"/>,
-        /// the registered service will be instanced and initialized each time
+        /// the registered service will be instantiated and initialized each time
         /// it is requested.
         /// </param>
         /// <returns>
@@ -148,7 +148,7 @@ namespace TheXDS.ServicePool
         }
 
         /// <summary>
-        /// Registers a lazily-instanced singleton of type
+        /// Registers a lazily-instantiated singleton of type
         /// <typeparamref name="T"/> if the condition is true.
         /// </summary>
         /// <typeparam name="T">Type of service to register.</typeparam>
@@ -158,7 +158,7 @@ namespace TheXDS.ServicePool
         /// <param name="persistent">
         /// If set to <see langword="true"/>, the resolved singleton is going
         /// to be persisted in the service pool. When <see langword="false"/>,
-        /// the registered service will be instanced and initialized each time
+        /// the registered service will be instantiated and initialized each time
         /// it is requested.
         /// </param>
         /// <returns>
@@ -170,7 +170,7 @@ namespace TheXDS.ServicePool
         }
 
         /// <summary>
-        /// Registers a lazily-instanced singleton of type
+        /// Registers a lazily-instantiated singleton of type
         /// <typeparamref name="T"/> if the condition is true.
         /// </summary>
         /// <param name="condition">
@@ -180,7 +180,7 @@ namespace TheXDS.ServicePool
         /// <param name="persistent">
         /// If set to <see langword="true"/>, the resolved singleton is going
         /// to be persisted in the service pool. When <see langword="false"/>,
-        /// the registered service will be instanced and initialized each time
+        /// the registered service will be instantiated and initialized each time
         /// it is requested.
         /// </param>
         /// <returns>
@@ -192,7 +192,7 @@ namespace TheXDS.ServicePool
         }
 
         /// <summary>
-        /// Instances and registers a new service of type
+        /// Instantiates and registers a new service of type
         /// <typeparamref name="T"/> if the condition is true.
         /// </summary>
         /// <typeparam name="T">Type of service to register.</typeparam>
@@ -208,7 +208,7 @@ namespace TheXDS.ServicePool
         }
 
         /// <summary>
-        /// Instances and registers a new service if the condition is true.
+        /// Instantiates and registers a new service if the condition is true.
         /// </summary>
         /// <param name="condition">
         /// Determines if the service will be added to this pool.
@@ -253,7 +253,7 @@ namespace TheXDS.ServicePool
         /// <summary>
         /// Tries to resolve a registered service of type
         /// <typeparamref name="T"/>, and if not found, searches for any type
-        /// in the app domain that can be instanced and returned as the
+        /// in the app domain that can be instantiated and returned as the
         /// requested service.
         /// </summary>
         /// <typeparam name="T">Type of service to get.</typeparam>
@@ -272,7 +272,7 @@ namespace TheXDS.ServicePool
         /// <remarks>
         /// When discovering new services, if a service of a specific type is
         /// found inside the pool, it will be gracefully skipped and not
-        /// instanced again.
+        /// instantiated again.
         /// </remarks>
         public T? Discover<T>(bool persistent = true) where T : notnull
         {
@@ -282,7 +282,7 @@ namespace TheXDS.ServicePool
         /// <summary>
         /// Tries to resolve a registered service of type
         /// <typeparamref name="T"/>, and if not found, searches for any type
-        /// that can be instanced and returned as the requested service.
+        /// that can be instantiated and returned as the requested service.
         /// </summary>
         /// <typeparam name="T">Type of service to get.</typeparam>
         /// <param name="discoveryEngine">
@@ -303,7 +303,7 @@ namespace TheXDS.ServicePool
         /// <remarks>
         /// When discovering new services, if a service of a specific type is
         /// found inside the pool, it will be gracefully skipped and not
-        /// instanced again.
+        /// instantiated again.
         /// </remarks>
         public T? Discover<T>(IDiscoveryEngine discoveryEngine, bool persistent = true) where T : notnull
         {
@@ -460,7 +460,7 @@ namespace TheXDS.ServicePool
 
         private T CreateNewInstance<T>()
         {
-            return (T)(CreateNewInstance(typeof(T)) ?? throw Errors.CantInstance());
+            return (T)(CreateNewInstance(typeof(T)) ?? throw Errors.CantInstantiate());
         }
 
         private object? Resolve(Type serviceType)
