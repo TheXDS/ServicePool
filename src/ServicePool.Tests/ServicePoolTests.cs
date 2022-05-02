@@ -287,7 +287,6 @@ public class ServicePoolTests
         Assert.Catch<InvalidOperationException>(() => pool.RegisterNow<AbstractTest>());
     }
 
-
     [Test]
     public void ServicePool_errors_have_messages()
     {
