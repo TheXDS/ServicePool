@@ -21,7 +21,6 @@
 
 using System;
 using System.Collections.Generic;
-using System.Linq;
 
 namespace TheXDS.ServicePool
 {
@@ -36,12 +35,9 @@ namespace TheXDS.ServicePool
     /// </remarks>
     public class DefaultDiscoveryEngine : IDiscoveryEngine
     {
+        private readonly IDiscoveryEngine _engine = new AssemblyListDiscoveryEngine(AppDomain.CurrentDomain.GetAssemblies());
+
         /// <inheritdoc/>
-        public IEnumerable<Type> Discover(Type t)
-        {
-            return AppDomain.CurrentDomain.GetAssemblies()
-                .SelectMany(p => p.GetTypes())
-                .Where(p => !p.IsAbstract && !p.IsInterface && t.IsAssignableFrom(p));
-        }
+        public IEnumerable<Type> Discover(Type t) => _engine.Discover(t);
     }
 }
