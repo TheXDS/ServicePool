@@ -470,7 +470,7 @@ namespace TheXDS.ServicePool
 
         private object? ResolveActive(Type serviceType)
         {
-            return _singletons.FirstOrDefault(p => p.GetType() == serviceType);
+            return _singletons.FirstOrDefault(p => serviceType.IsAssignableFrom(p.GetType()));
         }
 
         private object? ResolveLazy(Type serviceType)

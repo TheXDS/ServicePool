@@ -119,6 +119,23 @@ namespace TheXDS.ServicePool.Tests
         }
 
         [Test]
+        public void Resolve_resolves_for_interfaces()
+        {
+            ServicePool? pool = new();
+            pool.Register<Test1>();
+            Assert.IsNotNull(pool.Resolve<ITest>());
+        }
+
+
+        [Test]
+        public void Resolve_resolves_for_base_class()
+        {
+            ServicePool? pool = new();
+            pool.Register<Test3>();
+            Assert.IsNotNull(pool.Resolve<Test1>());
+        }
+
+        [Test]
         public void Pool_inits_lazy_services_on_InitNow()
         {
             ServicePool? pool = new ServicePool().Register<Random>();
@@ -193,7 +210,7 @@ namespace TheXDS.ServicePool.Tests
         public void DiscoverAll_enumerates_all_types_that_implement_base_type()
         {
             ServicePool pool = new();
-            Assert.AreEqual(2, pool.DiscoverAll<ITest>().ToArray().Length);
+            Assert.AreEqual(3, pool.DiscoverAll<ITest>().ToArray().Length);
         }
 
         [Test]
@@ -203,9 +220,10 @@ namespace TheXDS.ServicePool.Tests
             pool.RegisterNow<Test1>();
             var t1 = pool.Resolve<Test1>();
             ITest[] c = pool.DiscoverAll<ITest>().ToArray();
-            Assert.AreEqual(2, c.Length);
+            Assert.AreEqual(3, c.Length);
             Assert.AreSame(t1, c[0]);
             Assert.IsInstanceOf<Test2>(c[1]);
+            Assert.IsInstanceOf<Test3>(c[2]);
         }
 
         [Test]
@@ -319,6 +337,11 @@ namespace TheXDS.ServicePool.Tests
             {
                 Assert.Pass();
             }
+        }
+
+        [ExcludeFromCodeCoverage]
+        private class Test3 : Test1
+        {
         }
     }
 }
