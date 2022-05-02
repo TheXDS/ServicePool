@@ -28,6 +28,7 @@ using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Diagnostics.CodeAnalysis;
 using System.Linq;
+using System.Reflection;
 
 namespace TheXDS.ServicePool.Tests
 {
@@ -125,7 +126,6 @@ namespace TheXDS.ServicePool.Tests
             pool.Register<Test1>();
             Assert.IsNotNull(pool.Resolve<ITest>());
         }
-
 
         [Test]
         public void Resolve_resolves_for_base_class()
@@ -285,6 +285,30 @@ namespace TheXDS.ServicePool.Tests
             ServicePool pool = new();
             Assert.Catch<InvalidOperationException>(() => pool.RegisterNow<ITest>());
             Assert.Catch<InvalidOperationException>(() => pool.RegisterNow<AbstractTest>());
+        }
+
+
+        [Test]
+        public void ServicePool_errors_have_messages()
+        {
+            ServicePool pool = new();
+            var ex = Assert.Catch<InvalidOperationException>(() => pool.RegisterNow<ITest>());
+            Assert.IsNotNull(ex);
+            Assert.IsNotEmpty(ex!.Message);
+        }
+
+        [TestCase("en_US")]
+        [TestCase("es_MX")]
+        public void ServicePool_strings_have_localized_messages(string locale)
+        {
+            Resources.Strings.Errors.Culture = new(locale);
+            foreach (var prop in typeof(Resources.Strings.Errors)
+                .GetProperties(BindingFlags.Static | BindingFlags.Public)
+                .Where(p => p.PropertyType == typeof(string))
+                .Select(p => p.GetValue(null)).Cast<string>())
+            {
+                Assert.IsFalse(string.IsNullOrWhiteSpace(prop));
+            }
         }
 
         [Test]

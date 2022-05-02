@@ -24,8 +24,19 @@ using Ers = TheXDS.ServicePool.Resources.Strings.Errors;
 
 namespace TheXDS.ServicePool.Resources
 {
-    internal static class Errors
+    /// <summary>
+    /// Exposes a set of common errors that can be thrown by ServicePool.
+    /// </summary>
+    public static class Errors
     {
+        /// <summary>
+        /// Gets an <see cref="InvalidOperationException"/> that is normally
+        /// thrown when a class inside the pool cannot be instantiated.
+        /// </summary>
+        /// <returns>
+        /// An <see cref="InvalidOperationException"/> with a custom error
+        /// message.
+        /// </returns>
         public static InvalidOperationException CantInstantiate()
         {
             return new InvalidOperationException(Ers.CantInstantiate);
