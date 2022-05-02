@@ -26,9 +26,9 @@ namespace TheXDS.ServicePool.Resources
 {
     internal static class Errors
     {
-        public static InvalidOperationException CantInstance()
+        public static InvalidOperationException CantInstantiate()
         {
-            return new InvalidOperationException(Ers.CantInstance);
+            return new InvalidOperationException(Ers.CantInstantiate);
         }
     }
 }
