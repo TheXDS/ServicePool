@@ -9,7 +9,7 @@
     <RepositoryUrl>https://github.com/TheXDS/$(Product)</RepositoryUrl>
     <RepositoryType>git</RepositoryType>
     <Description>$(Product)</Description>
-    <PackageLicenseExpression>GPL-3.0-or-later</PackageLicenseExpression>
+    <PackageLicenseExpression>MIT</PackageLicenseExpression>
     <PackageDescription>$(Description)</PackageDescription>
     <PackageRequireLicenseAcceptance>false</PackageRequireLicenseAcceptance>
   </PropertyGroup>
