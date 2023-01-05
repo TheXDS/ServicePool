@@ -34,19 +34,19 @@ paket add TheXDS.ServicePool
 
 **Package reference**  
 ```xml
-<PackageReference Include="TheXDS.ServicePool" Version="1.0.1" />
+<PackageReference Include="TheXDS.ServicePool" Version="1.0.4" />
 ```
 
 **C# interactive window (CSI)**  
 ```
-#r "nuget: TheXDS.ServicePool, 1.0.1"
+#r "nuget: TheXDS.ServicePool, 1.0.4"
 ```
 
 ## Building
 ServicePool can be built on any platform or CI environment supported by dotnet.
 
 ### Prerequisites
-- [.Net SDK 6.0](https://dotnet.microsoft.com/) or higher.
+- [.Net SDK 6.0](https://dotnet.microsoft.com/)
 
 ### Build ServicePool
 ```sh
