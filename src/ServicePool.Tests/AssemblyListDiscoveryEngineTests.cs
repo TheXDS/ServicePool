@@ -6,7 +6,7 @@
 //      César Andrés Morgan <xds_xps_ivx@hotmail.com>
 //
 // Released under the MIT License (MIT)
-// Copyright © 2011 - 2022 César Andrés Morgan
+// Copyright © 2011 - 2023 César Andrés Morgan
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy of
 // this software and associated documentation files (the “Software”), to deal in
@@ -25,6 +25,8 @@
 // LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
+
+#pragma warning disable CS1591
 
 using NUnit.Framework;
 using System;
@@ -68,7 +70,6 @@ public class AssemblyListDiscoveryEngineTests
     [Test]
     public void Engine_add_throws_on_null()
     {
-        var a = Assembly.GetExecutingAssembly();
         var e = new AssemblyListDiscoveryEngine();
         Assert.Throws<ArgumentNullException>(() => e.Add(null!));
     }
@@ -76,7 +77,6 @@ public class AssemblyListDiscoveryEngineTests
     [Test]
     public void Engine_insert_throws_on_null()
     {
-        var a = Assembly.GetExecutingAssembly();
         var e = new AssemblyListDiscoveryEngine();
         Assert.Throws<ArgumentNullException>(() => e.Insert(0, null!));
     }
@@ -84,7 +84,6 @@ public class AssemblyListDiscoveryEngineTests
     [Test]
     public void Engine_set_throws_on_null()
     {
-        var a = Assembly.GetExecutingAssembly();
         var e = new AssemblyListDiscoveryEngine
         {
             Assembly.GetExecutingAssembly()

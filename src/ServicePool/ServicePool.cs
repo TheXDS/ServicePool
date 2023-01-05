@@ -445,7 +445,7 @@ public class ServicePool : IEnumerable
     {
         if (t.IsAbstract || t.IsInterface) return null;
         ConstructorInfo[] ctors = t.GetConstructors().OrderByDescending(p => p.GetParameters().Length).ToArray();
-        foreach (var ctor in ctors)
+        foreach (ConstructorInfo ctor in ctors)
         {
             ParameterInfo[] pars = ctor.GetParameters();
             List<object> args = new();
