@@ -1,4 +1,4 @@
-﻿// ServicePoolTests.cs
+﻿// FlexPoolTests.cs
 //
 // This file is part of ServicePool
 //
@@ -36,46 +36,16 @@ using System.Collections.ObjectModel;
 using System.Diagnostics.CodeAnalysis;
 using System.Linq;
 using System.Reflection;
+using TheXDS.ServicePool.Extensions;
 
 namespace TheXDS.ServicePool.Tests;
 
-public class ServicePoolTests
+public class FlexPoolTests
 {
-    [Test]
-    public void Registration_api_is_fluent()
-    {
-        ServicePool? pool = new();
-        Assert.AreSame(pool, pool.Register<Random>());
-        Assert.AreSame(pool, pool.Register(DummyFactory));
-        Assert.AreSame(pool, pool.InitNow());
-        Assert.AreSame(pool, pool.RegisterNow<EventArgs>());
-        Assert.AreSame(pool, pool.RegisterNow(new object()));
-        Assert.AreSame(pool, pool.RegisterIf<Guid>(false));
-        Assert.AreSame(pool, pool.RegisterIf(false, DummyFactory));
-        Assert.AreSame(pool, pool.RegisterNowIf<EventArgs>(false));
-        Assert.AreSame(pool, pool.RegisterNowIf(false, new object()));
-    }
-
-    [Test]
-    public void ActiveCount_gets_correct_count()
-    {
-        ServicePool? pool = new();
-        Assert.Zero(pool.ActiveCount);
-
-        pool.RegisterNow<Exception>();
-        Assert.AreEqual(1, pool.ActiveCount);
-
-        pool.RegisterNow<EventArgs>();
-        Assert.AreEqual(2, pool.ActiveCount);
-
-        pool.Register<Random>();
-        Assert.AreEqual(2, pool.ActiveCount);
-    }
-
     [Test]
     public void Count_gets_total_service_count()
     {
-        ServicePool? pool = new();
+        FlexPool? pool = new();
         Assert.Zero(pool.Count);
 
         pool.RegisterNow<Exception>();
@@ -91,14 +61,16 @@ public class ServicePoolTests
     [Test]
     public void Pool_registers_and_resolves_cached_services()
     {
-        ServicePool? pool = new ServicePool().RegisterNow<Random>();
+        FlexPool? pool = new FlexPool();
+        pool.RegisterNow<Random>();
         Assert.IsInstanceOf<Random>(pool.Resolve<Random>());
     }
 
     [Test]
     public void Pool_resolves_persistent_services()
     {
-        ServicePool? pool = new ServicePool().Register<Random>(true);
+        FlexPool? pool = new FlexPool();
+        pool.Register<Random>(true);
         Random? r1 = pool.Resolve<Random>();
         Random? r2 = pool.Resolve<Random>();
 
@@ -110,7 +82,8 @@ public class ServicePoolTests
     [Test]
     public void Pool_resolves_non_persistent_services()
     {
-        ServicePool? pool = new ServicePool().Register<Random>(false);
+        FlexPool? pool = new FlexPool();
+        pool.Register<Random>(false);
         Random? r1 = pool.Resolve<Random>();
         Random? r2 = pool.Resolve<Random>();
 
@@ -122,14 +95,14 @@ public class ServicePoolTests
     [Test]
     public void Resolve_returns_null_if_not_registered()
     {
-        ServicePool? pool = new();
+        FlexPool? pool = new();
         Assert.IsNull(pool.Resolve<Random>());
     }
 
     [Test]
     public void Resolve_resolves_for_interfaces()
     {
-        ServicePool? pool = new();
+        FlexPool? pool = new();
         pool.Register<Test1>();
         Assert.IsNotNull(pool.Resolve<ITest>());
     }
@@ -137,7 +110,7 @@ public class ServicePoolTests
     [Test]
     public void Resolve_resolves_for_base_class()
     {
-        ServicePool? pool = new();
+        FlexPool? pool = new();
         pool.Register<Test3>();
         Assert.IsNotNull(pool.Resolve<Test1>());
     }
@@ -145,7 +118,8 @@ public class ServicePoolTests
     [Test]
     public void Pool_inits_lazy_services_on_InitNow()
     {
-        ServicePool? pool = new ServicePool().Register<Random>();
+        FlexPool? pool = new FlexPool();
+        pool.Register<Random>();
         Assert.Zero(pool.ActiveCount);
         pool.InitNow();
         Assert.AreEqual(1, pool.ActiveCount);
@@ -154,7 +128,8 @@ public class ServicePoolTests
     [Test]
     public void InitNow_skips_non_persistent_services()
     {
-        ServicePool? pool = new ServicePool().Register<Random>(false);
+        FlexPool? pool = new FlexPool();
+        pool.Register<Random>(false);
         Assert.Zero(pool.ActiveCount);
         pool.InitNow();
         Assert.Zero(pool.ActiveCount);
@@ -163,7 +138,8 @@ public class ServicePoolTests
     [Test]
     public void RegisterIf_skips_if_false()
     {
-        ServicePool? pool = new ServicePool().RegisterIf<Random>(false);
+        FlexPool? pool = new FlexPool();
+        pool.RegisterIf<Random>(false);
         Assert.Zero(pool.Count);
         pool.RegisterIf<Random>(true);
         Assert.AreEqual(1, pool.Count);
@@ -176,7 +152,8 @@ public class ServicePoolTests
     [Test]
     public void RegisterNowIf_skips_if_false()
     {
-        ServicePool? pool = new ServicePool().RegisterNowIf<Random>(false);
+        FlexPool? pool = new FlexPool();
+        pool.RegisterNowIf<Random>(false);
         Assert.Zero(pool.Count);
         pool.RegisterNowIf<Random>(true);
         Assert.AreEqual(1, pool.Count);
@@ -189,7 +166,7 @@ public class ServicePoolTests
     [Test]
     public void Discover_searches_for_service()
     {
-        ServicePool? pool = new();
+        FlexPool? pool = new();
         Assert.IsInstanceOf<Random>(pool.Discover<Random>());
         Assert.AreEqual(1, pool.Count);
     }
@@ -197,7 +174,7 @@ public class ServicePoolTests
     [Test]
     public void Discover_returns_from_active_services()
     {
-        ServicePool? pool = new();
+        FlexPool? pool = new();
         pool.Register<Random>();
         var r = pool.Resolve<Random>();
         Assert.AreSame(r, pool.Discover<Random>());
@@ -206,7 +183,7 @@ public class ServicePoolTests
     [Test]
     public void ResolveAll_returns_collection()
     {
-        ServicePool pool = new();
+        FlexPool pool = new();
         pool.RegisterNow(new List<int>());
         pool.RegisterNow(new Collection<int>());
         pool.RegisterNow(Array.Empty<int>());
@@ -216,14 +193,14 @@ public class ServicePoolTests
     [Test]
     public void DiscoverAll_enumerates_all_types_that_implement_base_type()
     {
-        ServicePool pool = new();
+        FlexPool pool = new();
         Assert.AreEqual(3, pool.DiscoverAll<ITest>().ToArray().Length);
     }
 
     [Test]
     public void DiscoverAll_skips_existing_services()
     {
-        ServicePool pool = new();
+        FlexPool pool = new();
         pool.RegisterNow<Test1>();
         var t1 = pool.Resolve<Test1>();
         ITest[] c = pool.DiscoverAll<ITest>().ToArray();
@@ -236,7 +213,7 @@ public class ServicePoolTests
     [Test]
     public void Pool_supports_removal()
     {
-        ServicePool pool = new();
+        FlexPool pool = new();
         pool.RegisterNow<Test1>();
         pool.Register<Test2>();
         Assert.IsTrue(pool.Remove<Test1>());
@@ -250,7 +227,7 @@ public class ServicePoolTests
     [Test]
     public void Consume_removes_service()
     {
-        ServicePool pool = new();
+        FlexPool pool = new();
         pool.RegisterNow<Test1>();
         Assert.IsInstanceOf<Test1>(pool.Consume<Test1>());
         Assert.Zero(pool.Count);
@@ -264,8 +241,9 @@ public class ServicePoolTests
     [Test]
     public void Enumerator_includes_lazy_and_eager_items()
     {
-        ServicePool pool = new();
-        pool.RegisterNow<Test1>().Register<Test2>();
+        FlexPool pool = new();
+        pool.RegisterNow<Test1>();
+        pool.Register<Test2>();
 
         IEnumerator e = pool.GetEnumerator();
         Assert.IsInstanceOf<IEnumerator>(e);
@@ -279,17 +257,9 @@ public class ServicePoolTests
     }
 
     [Test]
-    public void Common_ServicePool_exists()
-    {
-        Assert.IsAssignableFrom<ServicePool>(ServicePool.CommonPool);
-        ServicePool pool = ServicePool.CommonPool;
-        Assert.AreSame(pool, ServicePool.CommonPool);
-    }
-
-    [Test]
     public void ServicePool_throws_error_on_invalid_registrations()
     {
-        ServicePool pool = new();
+        FlexPool pool = new();
         Assert.Catch<InvalidOperationException>(() => pool.RegisterNow<ITest>());
         Assert.Catch<InvalidOperationException>(() => pool.RegisterNow<AbstractTest>());
     }
@@ -297,7 +267,7 @@ public class ServicePoolTests
     [Test]
     public void ServicePool_errors_have_messages()
     {
-        ServicePool pool = new();
+        FlexPool pool = new();
         var ex = Assert.Catch<InvalidOperationException>(() => pool.RegisterNow<ITest>());
         Assert.IsNotNull(ex);
         Assert.IsNotEmpty(ex!.Message);
@@ -320,7 +290,7 @@ public class ServicePoolTests
     [Test]
     public void ServicePool_throws_error_on_uninstantiable_class()
     {
-        ServicePool pool = new();
+        FlexPool pool = new();
         pool.Register(() => 3);
         Assert.Catch<InvalidOperationException>(() => pool.RegisterNow<UninstantiableTest>());
     }
@@ -328,10 +298,10 @@ public class ServicePoolTests
     [Test]
     public void ServicePool_injects_dependencies()
     {
-        ServicePool pool = new ServicePool()
-            .Register<Random>()
-            .Register<Test1>()
-            .Register<Test4>();
+        FlexPool pool = new FlexPool();
+        pool.Register<Random>();
+        pool.Register<Test1>();
+        pool.Register<Test4>();
 
         var t4 = pool.Resolve<Test4>()!;
         Assert.IsInstanceOf<Test4>(t4);

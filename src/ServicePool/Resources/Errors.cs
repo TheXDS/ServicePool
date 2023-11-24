@@ -29,24 +29,23 @@
 using System;
 using Ers = TheXDS.ServicePool.Resources.Strings.Errors;
 
-namespace TheXDS.ServicePool.Resources
+namespace TheXDS.ServicePool.Resources;
+
+/// <summary>
+/// Exposes a set of common errors that can be thrown by ServicePool.
+/// </summary>
+public static class Errors
 {
     /// <summary>
-    /// Exposes a set of common errors that can be thrown by ServicePool.
+    /// Gets an <see cref="InvalidOperationException"/> that is normally
+    /// thrown when a class inside the pool cannot be instantiated.
     /// </summary>
-    public static class Errors
+    /// <returns>
+    /// An <see cref="InvalidOperationException"/> with a custom error
+    /// message.
+    /// </returns>
+    public static InvalidOperationException CantInstantiate()
     {
-        /// <summary>
-        /// Gets an <see cref="InvalidOperationException"/> that is normally
-        /// thrown when a class inside the pool cannot be instantiated.
-        /// </summary>
-        /// <returns>
-        /// An <see cref="InvalidOperationException"/> with a custom error
-        /// message.
-        /// </returns>
-        public static InvalidOperationException CantInstantiate()
-        {
-            return new InvalidOperationException(Ers.CantInstantiate);
-        }
+        return new InvalidOperationException(Ers.CantInstantiate);
     }
 }

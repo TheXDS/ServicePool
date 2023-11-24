@@ -39,7 +39,7 @@ public class CommonExtensionsTests
     [Test]
     public void RegisterInto_registers_singleton()
     {
-        var pool = new ServicePool();
+        var pool = new FlexPool();
         var x = new Random().RegisterInto(pool);
         Assert.IsInstanceOf<Random>(x);
         Assert.AreSame(x, pool.Resolve<Random>());
@@ -48,7 +48,7 @@ public class CommonExtensionsTests
     [Test]
     public void RegisterIntoIf_registers_if_true()
     {
-        var pool = new ServicePool();
+        var pool = new FlexPool();
         var x = new Random().RegisterIntoIf(pool, true);
         Assert.IsInstanceOf<Random>(x);
         Assert.AreSame(x, pool.Resolve<Random>());
@@ -57,7 +57,7 @@ public class CommonExtensionsTests
     [Test]
     public void RegisterIntoIf_returns_null_if_false()
     {
-        var pool = new ServicePool();
+        var pool = new FlexPool();
         var x = new Random().RegisterIntoIf(pool, false);
         Assert.IsNull(x);
         Assert.IsNull(pool.Resolve<Random>());
