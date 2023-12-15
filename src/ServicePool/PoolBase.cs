@@ -1,4 +1,4 @@
-﻿// FlexPoolBase.cs
+﻿// PoolBase.cs
 //
 // This file is part of ServicePool
 //
@@ -44,8 +44,14 @@ public abstract class PoolBase : IEnumerable
     /// <summary>
     /// Represents a single lazily-initialized object factory item.
     /// </summary>
-    /// <param name="Persistent">If set to <see langword="true"/>, once the object instance is created, the new object will be persisted inside the pool and its factory removed.</param>
-    /// <param name="Factory"></param>
+    /// <param name="Persistent">
+    /// If set to <see langword="true"/>, once the object instance is created,
+    /// the new object will be persisted inside the pool and its factory
+    /// removed.
+    /// </param>
+    /// <param name="Factory">
+    /// Factory to use when creating a new instance of the requested service.
+    /// </param>
     protected record FactoryEntry(in bool Persistent, in Func<object> Factory);
 
     /// <summary>
@@ -92,21 +98,33 @@ public abstract class PoolBase : IEnumerable
     /// <see langword="false"/>, the registered service will be instantiated
     /// and initialized each time it is requested (it will be transient).
     /// </param>
-    /// <returns>
-    /// This same service pool instance, allowing the use of Fluent syntax.
-    /// </returns>
     public void Register<T>(bool persistent = true) where T : notnull => Register(typeof(T), persistent);
+
+    /// <summary>
+    /// Instances and registers a service of type
+    /// <typeparamref name="T"/>.
+    /// </summary>
+    /// <param name="singleton">Singleton instance to register.</param>
+    /// <typeparam name="T">Type of service to register.</typeparam>
+    public void RegisterNow<T>(T singleton) where T : notnull => RegisterNow((object)singleton);
 
     /// <summary>
     /// Instances and registers a new service of type
     /// <typeparamref name="T"/>.
     /// </summary>
     /// <typeparam name="T">Type of service to register.</typeparam>
-    /// <returns>
-    /// This same service pool instance, allowing the use of Fluent syntax.
-    /// </returns>
-    public void RegisterNow<T>(T singleton) where T : notnull => RegisterNow(singleton);
+    public void RegisterNow<T>() where T : notnull => RegisterNow(CreateInstance(typeof(T)));
 
+    /// <summary>
+    /// Registers a lazily-instantiated service.
+    /// </summary>
+    /// <param name="objectType">Type of object to register.</param>
+    /// <param name="persistent">
+    /// If set to <see langword="true"/>, the resolved object is going to be
+    /// persisted in the service pool (it will be a Singleton). When 
+    /// <see langword="false"/>, the registered service will be instantiated
+    /// and initialized each time it is requested (it will be transient).
+    /// </param>
     public abstract void Register(Type objectType, bool persistent = true);
 
     /// <summary>
@@ -120,20 +138,20 @@ public abstract class PoolBase : IEnumerable
     /// <see langword="false"/>, the registered service will be instantiated
     /// and initialized each time it is requested (it will be transient).
     /// </param>
-    /// <returns>
-    /// This same service pool instance, allowing the use of Fluent syntax.
-    /// </returns>
     public abstract void Register<T>(Func<T> factory, bool persistent = true) where T : notnull;
-    
+
+    /// <summary>
+    /// Registers an active sigleton instance as a service on this pool.
+    /// </summary>
+    /// <param name="singleton">
+    /// Active instance to register.
+    /// </param>
     public abstract void RegisterNow(object singleton);
 
     /// <summary>
     /// Initializes all registered services marked as persistent using
     /// their respective registered factories.
     /// </summary>
-    /// <returns>
-    /// This same service pool instance, allowing the use of Fluent syntax.
-    /// </returns>
     public abstract void InitNow();
 
     /// <summary>
@@ -188,6 +206,15 @@ public abstract class PoolBase : IEnumerable
     /// <inheritdoc/>
     public abstract IEnumerator GetEnumerator();
 
+    /// <summary>
+    /// Creates a new instance of the specified type, resolving its required
+    /// dependencies from the registered services on this instance.
+    /// </summary>
+    /// <param name="t">Type of object to instance.</param>
+    /// <returns>
+    /// A new instance of the specified type, or <see langword="null"/> if the
+    /// specified type cannot be instantiated given its required dependencies.
+    /// </returns>
     public object? CreateInstanceOrNull(Type t)
     {
         if (t.IsAbstract || t.IsInterface) return null;
@@ -202,13 +229,41 @@ public abstract class PoolBase : IEnumerable
         return null;
     }
 
+    /// <summary>
+    /// Creates a new instance of the specified type, resolving its required
+    /// dependencies from the registered services on this instance.
+    /// </summary>
+    /// <param name="t">Type of object to instance.</param>
+    /// <returns>A new instance of the specified type.</returns>
+    /// <exception cref="InvalidOperationException">
+    /// Thrown if the requested service could not be created given its required
+    /// dependencies.
+    /// </exception>
     public object CreateInstance(Type t)
     {
         return CreateInstanceOrNull(t) ?? throw Errors.CantInstantiate();
     }
 
+    /// <summary>
+    /// Defines the resolution logic to be used when requesting a service that
+    /// should be initialized from a factory.
+    /// </summary>
+    /// <param name="objectType">Requested service type.</param>
+    /// <returns>
+    /// The resolved object instance, or <see langword="null"/> if the service
+    /// could not be lazily resolved.
+    /// </returns>
     protected abstract object? ResolveLazy(Type objectType);
 
+    /// <summary>
+    /// Defines the resolution logic to be used when requesting a service that
+    /// should be returned from a collection of active object instances.
+    /// </summary>
+    /// <param name="objectType">Requested service type.</param>
+    /// <returns>
+    /// The resolved object instance, or <see langword="null"/> if there is no
+    /// oject that could be mapped to the requested type.
+    /// </returns>
     protected abstract object? ResolveActive(Type objectType);
 
     private bool IsValidCtor(ConstructorInfo ctor, Type targetType, out object[]? args)

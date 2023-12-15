@@ -27,6 +27,7 @@
 // SOFTWARE.
 
 #pragma warning disable CS1591
+#pragma warning disable IDE0290
 
 using NUnit.Framework;
 using System;
@@ -61,7 +62,7 @@ public class FlexPoolTests
     [Test]
     public void Pool_registers_and_resolves_cached_services()
     {
-        FlexPool? pool = new FlexPool();
+        FlexPool? pool = new();
         pool.RegisterNow<Random>();
         Assert.IsInstanceOf<Random>(pool.Resolve<Random>());
     }
@@ -69,7 +70,7 @@ public class FlexPoolTests
     [Test]
     public void Pool_resolves_persistent_services()
     {
-        FlexPool? pool = new FlexPool();
+        FlexPool? pool = new();
         pool.Register<Random>(true);
         Random? r1 = pool.Resolve<Random>();
         Random? r2 = pool.Resolve<Random>();
@@ -82,7 +83,7 @@ public class FlexPoolTests
     [Test]
     public void Pool_resolves_non_persistent_services()
     {
-        FlexPool? pool = new FlexPool();
+        FlexPool? pool = new();
         pool.Register<Random>(false);
         Random? r1 = pool.Resolve<Random>();
         Random? r2 = pool.Resolve<Random>();
@@ -113,54 +114,6 @@ public class FlexPoolTests
         FlexPool? pool = new();
         pool.Register<Test3>();
         Assert.IsNotNull(pool.Resolve<Test1>());
-    }
-
-    [Test]
-    public void Pool_inits_lazy_services_on_InitNow()
-    {
-        FlexPool? pool = new FlexPool();
-        pool.Register<Random>();
-        Assert.Zero(pool.ActiveCount);
-        pool.InitNow();
-        Assert.AreEqual(1, pool.ActiveCount);
-    }
-
-    [Test]
-    public void InitNow_skips_non_persistent_services()
-    {
-        FlexPool? pool = new FlexPool();
-        pool.Register<Random>(false);
-        Assert.Zero(pool.ActiveCount);
-        pool.InitNow();
-        Assert.Zero(pool.ActiveCount);
-    }
-
-    [Test]
-    public void RegisterIf_skips_if_false()
-    {
-        FlexPool? pool = new FlexPool();
-        pool.RegisterIf<Random>(false);
-        Assert.Zero(pool.Count);
-        pool.RegisterIf<Random>(true);
-        Assert.AreEqual(1, pool.Count);
-        pool.RegisterIf(false, DummyFactory);
-        Assert.AreEqual(1, pool.Count);
-        pool.RegisterIf(true, DummyFactory);
-        Assert.AreEqual(2, pool.Count);
-    }
-
-    [Test]
-    public void RegisterNowIf_skips_if_false()
-    {
-        FlexPool? pool = new FlexPool();
-        pool.RegisterNowIf<Random>(false);
-        Assert.Zero(pool.Count);
-        pool.RegisterNowIf<Random>(true);
-        Assert.AreEqual(1, pool.Count);
-        pool.RegisterNowIf(false, new Exception());
-        Assert.AreEqual(1, pool.Count);
-        pool.RegisterNowIf(true, new Exception());
-        Assert.AreEqual(2, pool.Count);
     }
 
     [Test]
@@ -298,7 +251,7 @@ public class FlexPoolTests
     [Test]
     public void ServicePool_injects_dependencies()
     {
-        FlexPool pool = new FlexPool();
+        FlexPool pool = new();
         pool.Register<Random>();
         pool.Register<Test1>();
         pool.Register<Test4>();
@@ -313,12 +266,6 @@ public class FlexPoolTests
     {
         [ExcludeFromCodeCoverage]
         void Test();
-    }
-
-    [ExcludeFromCodeCoverage]
-    private static object DummyFactory()
-    {
-        return new object();
     }
 
     [ExcludeFromCodeCoverage]

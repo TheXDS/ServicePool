@@ -30,7 +30,6 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
-using TheXDS.ServicePool.Extensions;
 
 namespace TheXDS.ServicePool;
 
@@ -44,8 +43,8 @@ public class FlexPool : PoolBase
 {
     private record FlexFactoryEntry(in Type Type, in bool Persistent, in Func<object> Factory) : FactoryEntry(Persistent, Factory);
 
-    private List<FlexFactoryEntry> _factories = [];
-    private List<object> _instances = [];
+    private readonly List<FlexFactoryEntry> _factories = [];
+    private readonly List<object> _instances = [];
 
     /// <inhertdoc/>
     public override int Count => _instances.Count + _factories.Count;
@@ -76,20 +75,7 @@ public class FlexPool : PoolBase
     /// <inhertdoc/>
     public override IEnumerator GetEnumerator()
     {
-        return _instances.Concat(_factories.Select(CreateFromLazy)).GetEnumerator();
-    }
-
-    /// <summary>
-    /// Instances and registers a new service of type
-    /// <typeparamref name="T"/>.
-    /// </summary>
-    /// <typeparam name="T">Type of service to register.</typeparam>
-    /// <returns>
-    /// This same service pool instance, allowing the use of Fluent syntax.
-    /// </returns>
-    public void RegisterNow<T>() where T : notnull
-    {
-        RegisterNow(() => CreateInstance(typeof(T)));
+        return _instances.ToArray().Concat(_factories.Select(CreateFromLazy).ToArray()).GetEnumerator();
     }
 
     /// <inhertdoc/>
@@ -114,7 +100,7 @@ public class FlexPool : PoolBase
     /// <summary>
     /// Removes a registered service from this service pool.
     /// </summary>
-    /// <typeparam name="T">Type of service to remove.</typeparam>
+    /// <param name="objectType">Type of service to remove.</param>
     /// <returns>
     /// <see langword="true"/> if a registered service matching the
     /// requested type was found and removed from the pool,
@@ -139,68 +125,6 @@ public class FlexPool : PoolBase
         return _instances.OfType<T>()
             .Concat(GetLazyFactory(typeof(T))
             .Select(CreateFromLazy).Cast<T>());
-    }
-
-    /// <summary>
-    /// Tries to resolve and register all services of type
-    /// <typeparamref name="T"/> found in the current app domain, returning
-    /// the resulting enumeration of all services found.
-    /// </summary>
-    /// <typeparam name="T">Type of service to get.</typeparam>
-    /// <param name="persistent">
-    /// If set to <see langword="true"/>, in case a service of the
-    /// specified type hasn't been registered and a compatible type has
-    /// been discovered, the newly created instance will be registered
-    /// persistently in the pool. If set to <see langword="false"/>, any
-    /// discovered service will not be added to the pool.
-    /// </param>
-    /// <returns>
-    /// A collection of all the services found in the current app domain,
-    /// or an empty enumeration in case that no discoverable service for
-    /// the requested type exists.
-    /// </returns>
-    /// <remarks>
-    /// The resulting enumeration will contain all registered services, and
-    /// the discovery will skip any discoverable service for which there's
-    /// a singleton with the same type or a compatible lazy factory
-    /// registered.
-    /// </remarks>
-    public IEnumerable<T> DiscoverAll<T>(bool persistent = true) where T : notnull
-    {
-        return DiscoverAll<T>(new DefaultDiscoveryEngine(), persistent);
-    }
-
-    /// <summary>
-    /// Tries to resolve and register all services of type
-    /// <typeparamref name="T"/> found using the specified
-    /// <see cref="IDiscoveryEngine"/>, returning the resulting enumeration
-    /// of all services found.
-    /// </summary>
-    /// <typeparam name="T">Type of service to get.</typeparam>
-    /// <param name="discoveryEngine">
-    /// Discovery engine to use while searching for new instantiable types.
-    /// </param>
-    /// <param name="persistent">
-    /// If set to <see langword="true"/>, in case a service of the
-    /// specified type hasn't been registered and a compatible type has
-    /// been discovered, the newly created instance will be registered
-    /// persistently in the pool. If set to <see langword="false"/>, any
-    /// discovered service will not be added to the pool.
-    /// </param>
-    /// <returns>
-    /// A collection of all the services found in the current app domain,
-    /// or an empty enumeration in case that no discoverable service for
-    /// the requested type exists.
-    /// </returns>
-    /// <remarks>
-    /// The resulting enumeration will contain all registered services, and
-    /// the discovery will skip any discoverable service for which there's
-    /// a singleton with the same type or a compatible lazy factory
-    /// registered.
-    /// </remarks>
-    public IEnumerable<T> DiscoverAll<T>(IDiscoveryEngine discoveryEngine, bool persistent = true) where T : notnull
-    {
-        return ResolveAll<T>().Concat(this.DiscoverAll(discoveryEngine, typeof(T), persistent).Cast<T>());
     }
 
     /// <inhertdoc/>
