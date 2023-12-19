@@ -224,7 +224,6 @@ public static class DiscoverySupportExtensions
         return DiscoverAll<T>(pool, new DefaultDiscoveryEngine(), persistent);
     }
 
-
     /// <summary>
     /// Tries to resolve and register all services of type
     /// <typeparamref name="T"/> found using the specified

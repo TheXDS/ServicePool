@@ -1,4 +1,4 @@
-﻿// CommonExtensionsTests.cs
+﻿// FlexPoolExtensionsTests.cs
 //
 // This file is part of ServicePool
 //
@@ -28,38 +28,6 @@
 
 #pragma warning disable CS1591
 
-using NUnit.Framework;
-using System;
-using TheXDS.ServicePool.Extensions;
-
 namespace TheXDS.ServicePool.Tests;
 
-public abstract class CommonExtensionsTests<T> where T : PoolBase, new()
-{
-    [Test]
-    public void RegisterInto_registers_singleton()
-    {
-        var pool = new T();
-        var x = new Random().RegisterInto(pool);
-        Assert.That(x, Is.InstanceOf<Random>());
-        Assert.That(pool.Resolve<Random>(), Is.SameAs(x));
-    }
-
-    [Test]
-    public void RegisterIntoIf_registers_if_true()
-    {
-        var pool = new Pool();
-        var x = new Random().RegisterIntoIf(pool, true);
-        Assert.That(x, Is.InstanceOf<Random>());
-        Assert.That(pool.Resolve<Random>(), Is.SameAs(x));
-    }
-
-    [Test]
-    public void RegisterIntoIf_returns_object_if_false()
-    {
-        var pool = new FlexPool();
-        var x = new Random().RegisterIntoIf(pool, false);
-        Assert.That(x, Is.InstanceOf<Random>());
-        Assert.That(pool.Resolve<Random>(), Is.Null);
-    }
-}
+public class FlexPoolExtensionsTests : CommonExtensionsTests<FlexPool> { }
