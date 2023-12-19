@@ -37,8 +37,9 @@ namespace TheXDS.ServicePool;
 /// </summary>
 /// <remarks>
 /// This <see cref="IDiscoveryEngine"/> is used by default by
-/// <see cref="ServicePool.Discover{T}(bool)"/> and
-/// <see cref="ServicePool.DiscoverAll{T}(bool)"/>.
+/// <see cref="Extensions.DiscoverySupportExtensions.Discover{T}(PoolBase, bool)"/>,
+/// <see cref="Extensions.DiscoverySupportExtensions.DiscoverAll{T}(FlexPool, bool)"/>
+/// and other related overloads of these methods.
 /// </remarks>
 public class DefaultDiscoveryEngine : IDiscoveryEngine
 {

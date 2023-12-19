@@ -44,7 +44,7 @@ public class AssemblyListDiscoveryEngineTests
         {
             a
         };
-        Assert.Contains(a, e);
+        Assert.That(e, Contains.Item(a));
     }
 
     [Test]
@@ -53,7 +53,7 @@ public class AssemblyListDiscoveryEngineTests
         var a = Assembly.GetExecutingAssembly();
         var e = new AssemblyListDiscoveryEngine();
         e.Insert(0, a);
-        Assert.Contains(a, e);
+        Assert.That(e, Contains.Item(a));
     }
 
     [Test]
@@ -63,8 +63,8 @@ public class AssemblyListDiscoveryEngineTests
         var b = typeof(object).Assembly;
         var e = new AssemblyListDiscoveryEngine { a };
         e[0] = b;
-        Assert.False(e.Contains(a));
-        Assert.Contains(b, e);
+        Assert.That(e, Does.Not.Contain(a));
+        Assert.That(e, Contains.Item(b));
     }
 
     [Test]

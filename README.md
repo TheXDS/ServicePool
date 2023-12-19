@@ -58,9 +58,22 @@ The resulting binaries will be in the `./Build/bin` directory.
 ```sh
 dotnet test ./src/ServicePool.sln
 ```
+#### Coverage reports
+It is possible to generate a coverage report locally.For that, it is necessary to install [`ReportGenerator`](https://github.com/danielpalme/ReportGenerator), which will read the test results after execution, and will generate a web page with the coverage results.
+
+To install `ReportGenerator` execute:
+```sh
+dotnet tool install -g dotnet-reportgenerator-globaltool
+```
+After installing `ReportGenerator`, it will be possible to execute the following command:
+```sh
+dotnet test ./src/ServicePool.sln --collect:"XPlat Code Coverage" --results-directory:./Build/Tests ; reportgenerator -reports:./Build/Tests/*/coverage.cobertura.xml -targetdir:./Build/Coverage/
+```
+The coverage reports will be stored in `./Build/Coverage`
 
 ## Contribute
-If you think that ServicePool is useful, consider making a donation via
-[PayPal](https://paypal.me/thexds), or contact me directly.
+[![Buy Me A Coffee](https://cdn.buymeacoffee.com/buttons/default-orange.png)](https://www.buymeacoffee.com/xdsxpsivx)
 
-Sadly, I cannot offer any other donation methods, as my country (Honduras) is not supported on any platform. Not even PayPal supports donations per-se to people in Honduras, but at least I have an account there.
+If `ServicePool` is useful to you, or if you're interested in donating to sponsor the project, feel free to to a donation via [PayPal](https://paypal.me/thexds), [BuyMeACoffee](https://www.buymeacoffee.com/xdsxpsivx) or just contact me directly.
+
+Sadly, I cannot offer other means of sending donations as of right now due to my country (Honduras) not being supported by almost any platform.

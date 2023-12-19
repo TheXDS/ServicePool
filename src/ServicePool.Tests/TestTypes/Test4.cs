@@ -1,4 +1,4 @@
-﻿// Errors.cs
+﻿// Test4.cs
 //
 // This file is part of ServicePool
 //
@@ -6,7 +6,7 @@
 //      César Andrés Morgan <xds_xps_ivx@hotmail.com>
 //
 // Released under the MIT License (MIT)
-// Copyright © 2021 - 2023 César Andrés Morgan
+// Copyright © 2011 - 2022 César Andrés Morgan
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy of
 // this software and associated documentation files (the “Software”), to deal in
@@ -26,26 +26,23 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
+#pragma warning disable CS1591
+#pragma warning disable IDE0290
+
 using System;
-using Ers = TheXDS.ServicePool.Resources.Strings.Errors;
+using System.Diagnostics.CodeAnalysis;
 
-namespace TheXDS.ServicePool.Resources;
+namespace TheXDS.ServicePool.TestTypes;
 
-/// <summary>
-/// Exposes a set of common errors that can be thrown by ServicePool.
-/// </summary>
-public static class Errors
+[ExcludeFromCodeCoverage]
+public class Test4
 {
-    /// <summary>
-    /// Gets an <see cref="InvalidOperationException"/> that is normally
-    /// thrown when a class inside the pool cannot be instantiated.
-    /// </summary>
-    /// <returns>
-    /// An <see cref="InvalidOperationException"/> with a custom error
-    /// message.
-    /// </returns>
-    public static InvalidOperationException CantInstantiate()
+    public Test4(Random random, Test1 test1)
     {
-        return new InvalidOperationException(Ers.CantInstantiate);
+        Random = random;
+        Test1 = test1;
     }
+
+    public Random Random { get; }
+    public Test1 Test1 { get; }
 }

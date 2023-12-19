@@ -1,4 +1,4 @@
-﻿// CommonExtensionsTests.cs
+﻿// FlexPoolTests.cs
 //
 // This file is part of ServicePool
 //
@@ -30,36 +30,51 @@
 
 using NUnit.Framework;
 using System;
-using TheXDS.ServicePool.Extensions;
+using TheXDS.ServicePool.TestTypes;
 
 namespace TheXDS.ServicePool.Tests;
 
-public abstract class CommonExtensionsTests<T> where T : PoolBase, new()
+public class PoolTests : PoolBaseTests<Pool>
 {
     [Test]
-    public void RegisterInto_registers_singleton()
+    public void Resolve_resolves_for_interfaces()
     {
-        var pool = new T();
-        var x = new Random().RegisterInto(pool);
-        Assert.That(x, Is.InstanceOf<Random>());
-        Assert.That(pool.Resolve<Random>(), Is.SameAs(x));
+        Pool? pool = new();
+        pool.Register<ITest, Test1>();
+        Assert.That(pool.Resolve<ITest>(), Is.Not.Null);
     }
 
     [Test]
-    public void RegisterIntoIf_registers_if_true()
+    public void Resolve_resolves_for_base_class()
     {
-        var pool = new Pool();
-        var x = new Random().RegisterIntoIf(pool, true);
-        Assert.That(x, Is.InstanceOf<Random>());
-        Assert.That(pool.Resolve<Random>(), Is.SameAs(x));
+        Pool? pool = new();
+        pool.Register<Test1, Test3>();
+        Assert.That(pool.Resolve<Test1>(), Is.Not.Null);
+    }
+
+    [TestCase(typeof(ITest))]
+    [TestCase(typeof(Test1))]
+    [TestCase(typeof(Test3))]
+    public void Resolve_resolves_for_various_types(Type resolvableType)
+    {
+        Pool? pool = new();
+        pool.Register<Test3>([typeof(ITest), typeof(Test1), typeof(Test3)]);
+        Assert.That(pool.Resolve(resolvableType), Is.Not.Null);
     }
 
     [Test]
-    public void RegisterIntoIf_returns_object_if_false()
+    public void Resolve_returns_null_if_not_explicitly_registered_for_interface()
     {
-        var pool = new FlexPool();
-        var x = new Random().RegisterIntoIf(pool, false);
-        Assert.That(x, Is.InstanceOf<Random>());
-        Assert.That(pool.Resolve<Random>(), Is.Null);
+        Pool? pool = new();
+        pool.Register<Test1>();
+        Assert.That(pool.Resolve<ITest>(), Is.Null);
+    }
+
+    [Test]
+    public void Resolve_returns_null_if_not_explicitly_registered_for_own_type()
+    {
+        Pool? pool = new();
+        pool.Register<ITest, Test1>();
+        Assert.That(pool.Resolve<Test1>(), Is.Null);
     }
 }

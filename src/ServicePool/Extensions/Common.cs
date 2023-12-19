@@ -26,46 +26,43 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-namespace TheXDS.ServicePool.Extensions
+namespace TheXDS.ServicePool.Extensions;
+
+/// <summary>
+/// Includes a set of useful extension methods to work with ServicePool.
+/// </summary>
+public static class Common
 {
     /// <summary>
-    /// Includes a set of useful extension methods to work with ServicePool.
+    /// Adds support for Fluent singleton registration on any object type.
     /// </summary>
-    public static class Common
+    /// <typeparam name="T">
+    /// Type of object to register into the pool.
+    /// </typeparam>
+    /// <param name="obj">Instance to register.</param>
+    /// <param name="pool">Pool to register the singleton into.</param>
+    /// <returns>The same instance as <paramref name="obj"/>.</returns>
+    public static T RegisterInto<T>(this T obj, PoolBase pool) where T : notnull
     {
-        /// <summary>
-        /// Adds support for Fluent singleton registration on any object type.
-        /// </summary>
-        /// <typeparam name="T">
-        /// Type of object to register into the pool.
-        /// </typeparam>
-        /// <param name="obj">Instance to register.</param>
-        /// <param name="pool">Pool to register the singleton into.</param>
-        /// <returns>The same instance as <paramref name="obj"/>.</returns>
-        public static T RegisterInto<T>(this T obj, ServicePool pool) where T : notnull
-        {
-            pool.RegisterNow(obj);
-            return obj;
-        }
+        pool.RegisterNow(obj);
+        return obj;
+    }
 
-        /// <summary>
-        /// Adds support for Fluent singleton registration on any object type.
-        /// </summary>
-        /// <typeparam name="T">
-        /// Type of object to register into the pool.
-        /// </typeparam>
-        /// <param name="obj">Instance to register.</param>
-        /// <param name="pool">Pool to register the singleton into.</param>
-        /// <param name="condition">
-        /// Value that determines if the singleton should be registered or not.
-        /// </param>
-        /// <returns>
-        /// The same instance as <paramref name="obj"/> if 
-        /// <paramref name="condition"/> is equal to <see langword="true"/>,
-        /// <see langword="null"/> otherwise.</returns>
-        public static T? RegisterIntoIf<T>(this T obj, ServicePool pool, bool condition) where T : notnull
-        {
-            return condition ? obj.RegisterInto(pool) : default;
-        }
+    /// <summary>
+    /// Adds support for Fluent singleton registration on any object type.
+    /// </summary>
+    /// <typeparam name="T">
+    /// Type of object to register into the pool.
+    /// </typeparam>
+    /// <param name="obj">Instance to register.</param>
+    /// <param name="pool">Pool to register the singleton into.</param>
+    /// <param name="condition">
+    /// Value that determines if the singleton should be registered or not.
+    /// </param>
+    /// <returns>
+    /// The same instance as <paramref name="obj"/>.</returns>
+    public static T RegisterIntoIf<T>(this T obj, PoolBase pool, bool condition) where T : notnull
+    {
+        return condition ? obj.RegisterInto(pool) : obj;
     }
 }
