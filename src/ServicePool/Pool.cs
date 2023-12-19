@@ -81,8 +81,8 @@ public class Pool : PoolBase
         var entries = Factories.Where(p => p.Value.Persistent).ToArray();
         foreach (var entry in entries)
         {
-            RegisterNow(entry.Value.Factory());
             Factories.Remove(entry.Key);
+            RegisterNow(entry.Value.Factory());
         }
     }
 
@@ -158,6 +158,29 @@ public class Pool : PoolBase
     public void Register(Type objectType, Type[] typeRegistrations, bool persistent = true)
     {
         Register(() => CreateInstance(objectType), typeRegistrations, persistent);
+    }
+    
+    /// <summary>
+    /// Registers a lazily-instantiated service.
+    /// </summary>
+    /// <typeparam name="TReg">Type of object to register.</typeparam>
+    /// <typeparam name="TService">
+    /// Type of the object to be instantiated upon service type request.
+    /// </typeparam>
+    /// <param name="persistent">
+    /// If set to <see langword="true"/>, the resolved object is going to be
+    /// persisted in the service pool (it will be a Singleton). When 
+    /// <see langword="false"/>, the registered service will be instantiated
+    /// and initialized each time it is requested (it will be transient).
+    /// </param>
+    /// <returns>
+    /// This same service pool instance, allowing the use of Fluent syntax.
+    /// </returns>
+    public void Register<TReg, TService>(bool persistent = true)
+        where TReg : notnull
+        where TService : notnull
+    {
+        Register<TService>([typeof(TReg)], persistent);
     }
 
     /// <summary>

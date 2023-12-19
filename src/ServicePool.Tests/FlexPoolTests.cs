@@ -27,85 +27,25 @@
 // SOFTWARE.
 
 #pragma warning disable CS1591
-#pragma warning disable IDE0290
 
 using NUnit.Framework;
 using System;
-using System.Collections;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
-using System.Diagnostics.CodeAnalysis;
 using System.Linq;
-using System.Reflection;
 using TheXDS.ServicePool.Extensions;
+using TheXDS.ServicePool.TestTypes;
 
 namespace TheXDS.ServicePool.Tests;
 
-public class FlexPoolTests
+public class FlexPoolTests : PoolBaseTests<FlexPool>
 {
-    [Test]
-    public void Count_gets_total_service_count()
-    {
-        FlexPool? pool = new();
-        Assert.Zero(pool.Count);
-
-        pool.RegisterNow<Exception>();
-        Assert.AreEqual(1, pool.Count);
-
-        pool.RegisterNow<EventArgs>();
-        Assert.AreEqual(2, pool.Count);
-
-        pool.Register<Random>();
-        Assert.AreEqual(3, pool.Count);
-    }
-
-    [Test]
-    public void Pool_registers_and_resolves_cached_services()
-    {
-        FlexPool? pool = new();
-        pool.RegisterNow<Random>();
-        Assert.IsInstanceOf<Random>(pool.Resolve<Random>());
-    }
-
-    [Test]
-    public void Pool_resolves_persistent_services()
-    {
-        FlexPool? pool = new();
-        pool.Register<Random>(true);
-        Random? r1 = pool.Resolve<Random>();
-        Random? r2 = pool.Resolve<Random>();
-
-        Assert.IsInstanceOf<Random>(r1);
-        Assert.IsInstanceOf<Random>(r2);
-        Assert.AreSame(r1, r2);
-    }
-
-    [Test]
-    public void Pool_resolves_non_persistent_services()
-    {
-        FlexPool? pool = new();
-        pool.Register<Random>(false);
-        Random? r1 = pool.Resolve<Random>();
-        Random? r2 = pool.Resolve<Random>();
-
-        Assert.IsInstanceOf<Random>(r1);
-        Assert.IsInstanceOf<Random>(r2);
-        Assert.AreNotSame(r1, r2);
-    }
-
-    [Test]
-    public void Resolve_returns_null_if_not_registered()
-    {
-        FlexPool? pool = new();
-        Assert.IsNull(pool.Resolve<Random>());
-    }
-
     [Test]
     public void Resolve_resolves_for_interfaces()
     {
         FlexPool? pool = new();
         pool.Register<Test1>();
-        Assert.IsNotNull(pool.Resolve<ITest>());
+        Assert.That(pool.Resolve<ITest>(), Is.Not.Null);
     }
 
     [Test]
@@ -113,15 +53,15 @@ public class FlexPoolTests
     {
         FlexPool? pool = new();
         pool.Register<Test3>();
-        Assert.IsNotNull(pool.Resolve<Test1>());
+        Assert.That(pool.Resolve<Test1>(), Is.Not.Null);
     }
 
     [Test]
     public void Discover_searches_for_service()
     {
         FlexPool? pool = new();
-        Assert.IsInstanceOf<Random>(pool.Discover<Random>());
-        Assert.AreEqual(1, pool.Count);
+        Assert.That(pool.Discover<Random>(), Is.InstanceOf<Random>());
+        Assert.That(pool.Count, Is.EqualTo(1));
     }
 
     [Test]
@@ -130,7 +70,7 @@ public class FlexPoolTests
         FlexPool? pool = new();
         pool.Register<Random>();
         var r = pool.Resolve<Random>();
-        Assert.AreSame(r, pool.Discover<Random>());
+        Assert.That(pool.Discover<Random>(), Is.SameAs(r));
     }
 
     [Test]
@@ -140,14 +80,14 @@ public class FlexPoolTests
         pool.RegisterNow(new List<int>());
         pool.RegisterNow(new Collection<int>());
         pool.RegisterNow(Array.Empty<int>());
-        Assert.AreEqual(3, pool.ResolveAll<IEnumerable<int>>().Count());
+        Assert.That(pool.ResolveAll<IEnumerable<int>>().Count(), Is.EqualTo(3));
     }
 
     [Test]
     public void DiscoverAll_enumerates_all_types_that_implement_base_type()
     {
         FlexPool pool = new();
-        Assert.AreEqual(3, pool.DiscoverAll<ITest>().ToArray().Length);
+        Assert.That(pool.DiscoverAll<ITest>().ToArray().Length, Is.EqualTo(3));
     }
 
     [Test]
@@ -157,164 +97,25 @@ public class FlexPoolTests
         pool.RegisterNow<Test1>();
         var t1 = pool.Resolve<Test1>();
         ITest[] c = pool.DiscoverAll<ITest>().ToArray();
-        Assert.AreEqual(3, c.Length);
-        Assert.AreSame(t1, c[0]);
-        Assert.IsInstanceOf<Test2>(c[1]);
-        Assert.IsInstanceOf<Test3>(c[2]);
+        Assert.That(c.Length, Is.EqualTo(3));
+        Assert.That(c[0], Is.SameAs(t1));
+        Assert.That(c[1], Is.InstanceOf<Test2>());
+        Assert.That(c[2], Is.InstanceOf<Test3>());
     }
 
     [Test]
-    public void Pool_supports_removal()
+    public void DiscoverAll_allows_specifying_engine()
     {
         FlexPool pool = new();
-        pool.RegisterNow<Test1>();
-        pool.Register<Test2>();
-        Assert.IsTrue(pool.Remove<Test1>());
-        Assert.AreEqual(1, pool.Count);
-        Assert.IsFalse(pool.Remove<Test1>());
-        Assert.IsTrue(pool.Remove<Test2>());
-        Assert.Zero(pool.Count);
-        Assert.IsFalse(pool.Remove<Test2>());
+        ITest[] c = pool.DiscoverAll<ITest>(new DefaultDiscoveryEngine()).ToArray();
+        Assert.That(c.Length, Is.EqualTo(3));        
     }
 
     [Test]
-    public void Consume_removes_service()
+    public void Discover_allows_specifying_engine()
     {
         FlexPool pool = new();
-        pool.RegisterNow<Test1>();
-        Assert.IsInstanceOf<Test1>(pool.Consume<Test1>());
-        Assert.Zero(pool.Count);
-        Assert.Null(pool.Consume<Test1>());
-        pool.Register<Test1>();
-        Assert.IsInstanceOf<Test1>(pool.Consume<Test1>());
-        Assert.Zero(pool.Count);
-        Assert.Null(pool.Consume<Test1>());
-    }
-
-    [Test]
-    public void Enumerator_includes_lazy_and_eager_items()
-    {
-        FlexPool pool = new();
-        pool.RegisterNow<Test1>();
-        pool.Register<Test2>();
-
-        IEnumerator e = pool.GetEnumerator();
-        Assert.IsInstanceOf<IEnumerator>(e);
-        int c = 0;
-        while (e.MoveNext())
-        {
-            Assert.IsInstanceOf<ITest>(e.Current);
-            c++;
-        }
-        Assert.AreEqual(2, c);
-    }
-
-    [Test]
-    public void ServicePool_throws_error_on_invalid_registrations()
-    {
-        FlexPool pool = new();
-        Assert.Catch<InvalidOperationException>(() => pool.RegisterNow<ITest>());
-        Assert.Catch<InvalidOperationException>(() => pool.RegisterNow<AbstractTest>());
-    }
-
-    [Test]
-    public void ServicePool_errors_have_messages()
-    {
-        FlexPool pool = new();
-        var ex = Assert.Catch<InvalidOperationException>(() => pool.RegisterNow<ITest>());
-        Assert.IsNotNull(ex);
-        Assert.IsNotEmpty(ex!.Message);
-    }
-
-    [TestCase("en_US")]
-    [TestCase("es_MX")]
-    public void ServicePool_strings_have_localized_messages(string locale)
-    {
-        Resources.Strings.Errors.Culture = new(locale);
-        foreach (var prop in typeof(Resources.Strings.Errors)
-            .GetProperties(BindingFlags.Static | BindingFlags.Public)
-            .Where(p => p.PropertyType == typeof(string))
-            .Select(p => p.GetValue(null)).Cast<string>())
-        {
-            Assert.IsFalse(string.IsNullOrWhiteSpace(prop));
-        }
-    }
-
-    [Test]
-    public void ServicePool_throws_error_on_uninstantiable_class()
-    {
-        FlexPool pool = new();
-        pool.Register(() => 3);
-        Assert.Catch<InvalidOperationException>(() => pool.RegisterNow<UninstantiableTest>());
-    }
-
-    [Test]
-    public void ServicePool_injects_dependencies()
-    {
-        FlexPool pool = new();
-        pool.Register<Random>();
-        pool.Register<Test1>();
-        pool.Register<Test4>();
-
-        var t4 = pool.Resolve<Test4>()!;
-        Assert.IsInstanceOf<Test4>(t4);
-        Assert.IsInstanceOf<Random>(t4.Random);
-        Assert.IsInstanceOf<Test1>(t4.Test1);
-    }
-
-    private interface ITest
-    {
-        [ExcludeFromCodeCoverage]
-        void Test();
-    }
-
-    [ExcludeFromCodeCoverage]
-    private abstract class AbstractTest : ITest
-    {
-        public abstract void Test();
-    }
-
-    [ExcludeFromCodeCoverage]
-    private class UninstantiableTest
-    {
-        public UninstantiableTest(int x, Exception y, Guid z, IEnumerator a)
-        {
-        }
-    }
-
-    [ExcludeFromCodeCoverage]
-    private class Test1 : ITest
-    {
-        public void Test()
-        {
-            Assert.Pass();
-        }
-    }
-
-    [ExcludeFromCodeCoverage]
-    private class Test2 : ITest
-    {
-        void ITest.Test()
-        {
-            Assert.Pass();
-        }
-    }
-
-    [ExcludeFromCodeCoverage]
-    private class Test3 : Test1
-    {
-    }
-
-    [ExcludeFromCodeCoverage]
-    private class Test4
-    {
-        public Test4(Random random, Test1 test1)
-        {
-            Random = random;
-            Test1 = test1;
-        }
-
-        public Random Random { get; }
-        public Test1 Test1 { get; }
+        var c = pool.Discover<ITest>(new DefaultDiscoveryEngine());
+        Assert.That(c, Is.Not.Null);
     }
 }

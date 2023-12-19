@@ -1,4 +1,4 @@
-﻿// CommonExtensionsTests.cs
+﻿// Test4.cs
 //
 // This file is part of ServicePool
 //
@@ -27,43 +27,22 @@
 // SOFTWARE.
 
 #pragma warning disable CS1591
+#pragma warning disable IDE0290
 
-using NUnit.Framework;
 using System;
-using TheXDS.ServicePool.Extensions;
+using System.Diagnostics.CodeAnalysis;
 
-namespace TheXDS.ServicePool.Tests;
+namespace TheXDS.ServicePool.TestTypes;
 
-public class PoolExtensionsTests : CommonExtensionsTests<Pool> { }
-
-public class FlexPoolExtensionsTests : CommonExtensionsTests<FlexPool> { }
-
-public abstract class CommonExtensionsTests<T> where T : PoolBase, new()
+[ExcludeFromCodeCoverage]
+public class Test4
 {
-    [Test]
-    public void RegisterInto_registers_singleton()
+    public Test4(Random random, Test1 test1)
     {
-        var pool = new T();
-        var x = new Random().RegisterInto(pool);
-        Assert.That(x, Is.InstanceOf<Random>());
-        Assert.That(pool.Resolve<Random>(), Is.SameAs(x));
+        Random = random;
+        Test1 = test1;
     }
 
-    [Test]
-    public void RegisterIntoIf_registers_if_true()
-    {
-        var pool = new Pool();
-        var x = new Random().RegisterIntoIf(pool, true);
-        Assert.That(x, Is.InstanceOf<Random>());
-        Assert.That(pool.Resolve<Random>(), Is.SameAs(x));
-    }
-
-    [Test]
-    public void RegisterIntoIf_returns_object_if_false()
-    {
-        var pool = new FlexPool();
-        var x = new Random().RegisterIntoIf(pool, false);
-        Assert.That(x, Is.InstanceOf<Random>());
-        Assert.That(pool.Resolve<Random>(), Is.Null);
-    }
+    public Random Random { get; }
+    public Test1 Test1 { get; }
 }

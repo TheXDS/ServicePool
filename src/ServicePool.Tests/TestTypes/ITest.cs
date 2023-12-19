@@ -1,4 +1,4 @@
-﻿// CommonExtensionsTests.cs
+﻿// ITest.cs
 //
 // This file is part of ServicePool
 //
@@ -27,43 +27,15 @@
 // SOFTWARE.
 
 #pragma warning disable CS1591
+#pragma warning disable IDE0290
+#pragma warning disable IDE0060
 
-using NUnit.Framework;
-using System;
-using TheXDS.ServicePool.Extensions;
+using System.Diagnostics.CodeAnalysis;
 
-namespace TheXDS.ServicePool.Tests;
+namespace TheXDS.ServicePool.TestTypes;
 
-public class PoolExtensionsTests : CommonExtensionsTests<Pool> { }
-
-public class FlexPoolExtensionsTests : CommonExtensionsTests<FlexPool> { }
-
-public abstract class CommonExtensionsTests<T> where T : PoolBase, new()
+public interface ITest
 {
-    [Test]
-    public void RegisterInto_registers_singleton()
-    {
-        var pool = new T();
-        var x = new Random().RegisterInto(pool);
-        Assert.That(x, Is.InstanceOf<Random>());
-        Assert.That(pool.Resolve<Random>(), Is.SameAs(x));
-    }
-
-    [Test]
-    public void RegisterIntoIf_registers_if_true()
-    {
-        var pool = new Pool();
-        var x = new Random().RegisterIntoIf(pool, true);
-        Assert.That(x, Is.InstanceOf<Random>());
-        Assert.That(pool.Resolve<Random>(), Is.SameAs(x));
-    }
-
-    [Test]
-    public void RegisterIntoIf_returns_object_if_false()
-    {
-        var pool = new FlexPool();
-        var x = new Random().RegisterIntoIf(pool, false);
-        Assert.That(x, Is.InstanceOf<Random>());
-        Assert.That(pool.Resolve<Random>(), Is.Null);
-    }
+    [ExcludeFromCodeCoverage]
+    void Test();
 }

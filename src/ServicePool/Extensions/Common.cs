@@ -42,7 +42,7 @@ public static class Common
     /// <param name="obj">Instance to register.</param>
     /// <param name="pool">Pool to register the singleton into.</param>
     /// <returns>The same instance as <paramref name="obj"/>.</returns>
-    public static T RegisterInto<T>(this T obj, FlexPool pool) where T : notnull
+    public static T RegisterInto<T>(this T obj, PoolBase pool) where T : notnull
     {
         pool.RegisterNow(obj);
         return obj;
@@ -60,11 +60,9 @@ public static class Common
     /// Value that determines if the singleton should be registered or not.
     /// </param>
     /// <returns>
-    /// The same instance as <paramref name="obj"/> if 
-    /// <paramref name="condition"/> is equal to <see langword="true"/>,
-    /// <see langword="null"/> otherwise.</returns>
-    public static T? RegisterIntoIf<T>(this T obj, FlexPool pool, bool condition) where T : notnull
+    /// The same instance as <paramref name="obj"/>.</returns>
+    public static T RegisterIntoIf<T>(this T obj, PoolBase pool, bool condition) where T : notnull
     {
-        return condition ? obj.RegisterInto(pool) : default;
+        return condition ? obj.RegisterInto(pool) : obj;
     }
 }
