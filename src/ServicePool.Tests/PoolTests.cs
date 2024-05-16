@@ -37,6 +37,24 @@ namespace TheXDS.ServicePool.Tests;
 public class PoolTests : PoolBaseTests<Pool>
 {
     [Test]
+    public void Pool_config_supports_flex_registration()
+    {
+        var c = PoolConfig.Default with { FlexRegistration = true };
+        var pool = new Pool(c);
+        pool.RegisterNow(new Test1());
+        Assert.That(pool.Resolve<ITest>(), Is.Not.Null);
+    }
+
+    [Test]
+    public void Pool_config_flex_registration_defaults_to_false()
+    {
+        var c = PoolConfig.Default;
+        var pool = new Pool(c);
+        pool.RegisterNow(new Test1());
+        Assert.That(pool.Resolve<ITest>(), Is.Null);
+    }
+
+    [Test]
     public void Resolve_resolves_for_interfaces()
     {
         Pool? pool = new();

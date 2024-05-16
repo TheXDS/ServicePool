@@ -35,13 +35,45 @@ using System.Runtime.CompilerServices;
 namespace TheXDS.ServicePool;
 
 /// <summary>
+/// Contains a set of configuratino values to be used when instanciating a new
+/// <see cref="Pool"/>.
+/// </summary>
+/// <param name="FlexRegistration">
+/// Indicates whether or not flexible registration should be used when calling
+/// <see cref="Pool.RegisterNow(object)"/>.
+/// </param>
+public record struct PoolConfig(bool FlexRegistration)
+{
+    /// <summary>
+    /// Represents the default configuration for a <see cref="Pool"/>.
+    /// </summary>
+    public static readonly PoolConfig Default = new();
+}
+
+/// <summary>
 /// Represents a collection of hosted services that can be instantiated and 
 /// resolved using dependency injection, resolving objects to whichever
 /// resolution type they have registered, and only allowing a single type per
 /// pool to be registered.
 /// </summary>
-public class Pool : PoolBase
+public class Pool(PoolConfig config) : PoolBase
 {
+    private readonly PoolConfig _config = config;
+
+    private Type[] GetRegTypes(Type source)
+    {
+        return [source, .. (_config.FlexRegistration ? source.GetInterfaces() : [])];
+    }
+
+    /// <summary>
+    /// Initializes a new instance of the <see cref="Pool"/> class using the
+    /// default pool configuration.
+    /// </summary>
+    public Pool() : this(PoolConfig.Default)
+    {
+        
+    }
+
     /// <summary>
     /// Gets a dictionary of all factories registered to generate
     /// lazily-initialized services.
@@ -60,19 +92,19 @@ public class Pool : PoolBase
     /// <inheritdoc/>
     public override void Register(Type objectType, bool persistent = true)
     {
-         Register(objectType, [objectType], persistent);
+         Register(objectType, GetRegTypes(objectType), persistent);
     }
 
     /// <inheritdoc/>
     public override void Register<T>(Func<T> factory, bool persistent = true)
     {
-        Register(() => factory(), [typeof(T)], persistent);
+        Register(() => factory(), GetRegTypes(typeof(T)), persistent);
     }
 
     /// <inheritdoc/>
     public override void RegisterNow(object singleton)
     {
-        RegisterNow(singleton, [singleton.GetType()]);
+        RegisterNow(singleton, GetRegTypes(singleton.GetType()));
     }
 
     /// <inheritdoc/>

@@ -39,6 +39,7 @@ namespace TheXDS.ServicePool;
 /// interface/base type defined in their declaration without explicit
 /// registration.
 /// </summary>
+[Obsolete("The functionality of FlexPool will be available on the Pool type via configuration before the final 2.0 release.")]
 public class FlexPool : PoolBase
 {
     private record FlexFactoryEntry(in Type Type, in bool Persistent, in Func<object> Factory) : FactoryEntry(Persistent, Factory);
