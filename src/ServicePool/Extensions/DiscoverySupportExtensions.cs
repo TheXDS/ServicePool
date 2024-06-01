@@ -49,13 +49,6 @@ public static class DiscoverySupportExtensions
     /// <param name="pool">
     /// Pool instance to discover the services from/onto.
     /// </param>
-    /// <param name="persistent">
-    /// If set to <see langword="true"/>, in case a service of the
-    /// specified type hasn't been registered and a compatible type has
-    /// been discovered, the newly created instance will be registered
-    /// persistently in the pool. If set to <see langword="false"/>, the
-    /// discovered service will not be added to the pool.
-    /// </param>
     /// <returns>
     /// A registered service or a newly discovered one if it implements the
     /// requested type, or <see langword="null"/> in case that no
@@ -66,9 +59,9 @@ public static class DiscoverySupportExtensions
     /// found inside the pool, it will be gracefully skipped and not
     /// instantiated again.
     /// </remarks>
-    public static T? Discover<T>(this PoolBase pool, bool persistent = true) where T : notnull
+    public static T? Discover<T>(this Pool pool) where T : notnull
     {
-        return (T?)Discover(pool, typeof(T), persistent);
+        return (T?)Discover(pool, typeof(T));
     }
 
     /// <summary>
@@ -80,21 +73,14 @@ public static class DiscoverySupportExtensions
     /// Pool instance to discover the service from/onto.
     /// </param>
     /// <param name="objectType">Type fo service to discover.</param>
-    /// <param name="persistent">
-    /// If set to <see langword="true"/>, in case a service of the
-    /// specified type hasn't been registered and a compatible type has
-    /// been discovered, the newly created instance will be registered
-    /// persistently in the pool. If set to <see langword="false"/>, the
-    /// discovered service will not be added to the pool.
-    /// </param>
     /// <returns>
     /// A registered service or a newly discovered one if it implements the
     /// requested type, or <see langword="null"/> in case that no
     /// discoverable service for the requested type exists.
     /// </returns>
-    public static object? Discover(this PoolBase pool, Type objectType, bool persistent = true)
+    public static object? Discover(this Pool pool, Type objectType)
     {
-        return Discover(pool, objectType, new DefaultDiscoveryEngine(), persistent);
+        return Discover(pool, objectType, new DefaultDiscoveryEngine());
     }
 
     /// <summary>
@@ -109,13 +95,6 @@ public static class DiscoverySupportExtensions
     /// <param name="discoveryEngine">
     /// Discovery engine to use while searching for new instantiable types.
     /// </param>
-    /// <param name="persistent">
-    /// If set to <see langword="true"/>, in case a service of the
-    /// specified type hasn't been registered and a compatible type has
-    /// been discovered, the newly created instance will be registered
-    /// persistently in the pool. If set to <see langword="false"/>, the
-    /// discovered service will not be added to the pool.
-    /// </param>
     /// <returns>
     /// A registered service or a newly discovered one if it implements the
     /// requested type, or <see langword="null"/> in case that no
@@ -126,9 +105,9 @@ public static class DiscoverySupportExtensions
     /// found inside the pool, it will be gracefully skipped and not
     /// instantiated again.
     /// </remarks>
-    public static T? Discover<T>(this PoolBase pool, IDiscoveryEngine discoveryEngine, bool persistent = true) where T : notnull
+    public static T? Discover<T>(this Pool pool, IDiscoveryEngine discoveryEngine) where T : notnull
     {
-        return (T?)Discover(pool, typeof(T), discoveryEngine, persistent);
+        return (T?)Discover(pool, typeof(T), discoveryEngine);
     }
 
     /// <summary>
@@ -143,21 +122,14 @@ public static class DiscoverySupportExtensions
     /// <param name="discoveryEngine">
     /// Discovery engine to use while searching for new instantiable types.
     /// </param>
-    /// <param name="persistent">
-    /// If set to <see langword="true"/>, in case a service of the
-    /// specified type hasn't been registered and a compatible type has
-    /// been discovered, the newly created instance will be registered
-    /// persistently in the pool. If set to <see langword="false"/>, the
-    /// discovered service will not be added to the pool.
-    /// </param>
     /// <returns>
     /// A registered service or a newly discovered one if it implements the
     /// requested type, or <see langword="null"/> in case that no
     /// discoverable service for the requested type exists.
     /// </returns>
-    public static object? Discover(this PoolBase pool, Type objectType, IDiscoveryEngine discoveryEngine, bool persistent = true)
+    public static object? Discover(this Pool pool, Type objectType, IDiscoveryEngine discoveryEngine)
     {
-        return pool.Resolve(objectType) ?? DiscoverAll(pool, discoveryEngine, objectType, persistent).FirstOrDefault();
+        return pool.Resolve(objectType) ?? DiscoverAll(pool, discoveryEngine, objectType).FirstOrDefault();
     }
 
     /// <summary>
@@ -170,23 +142,15 @@ public static class DiscoverySupportExtensions
     /// Discovery engine to use while searching for new instantiable types.
     /// </param>
     /// <param name="t">Type of service to discover.</param>
-    /// <param name="persistent">
-    /// If set to <see langword="true"/>, in case a service of the
-    /// specified type hasn't been registered and a compatible type has
-    /// been discovered, the newly created instances will be registered
-    /// persistently in the pool. If set to <see langword="false"/>, the
-    /// discovered services will not be added to the pool.
-    /// </param>
     /// <returns>
     /// An enumeration of all discovered services.
     /// </returns>
-    public static IEnumerable<object?> DiscoverAll(this PoolBase pool, IDiscoveryEngine discoveryEngine, Type t, bool persistent)
+    public static IEnumerable<object?> DiscoverAll(this Pool pool, IDiscoveryEngine discoveryEngine, Type t)
     {
         foreach (Type dt in discoveryEngine.Discover(t))
         {
             if (pool.Resolve(dt) is null && pool.CreateInstanceOrNull(dt) is { } obj)
             {
-                if (persistent) pool.RegisterNow(obj);
                 yield return obj;
             }
         }
@@ -201,13 +165,6 @@ public static class DiscoverySupportExtensions
     /// <param name="pool">
     /// Pool instance to discover the services from/onto.
     /// </param>
-    /// <param name="persistent">
-    /// If set to <see langword="true"/>, in case a service of the
-    /// specified type hasn't been registered and a compatible type has
-    /// been discovered, the newly created instance will be registered
-    /// persistently in the pool. If set to <see langword="false"/>, any
-    /// discovered service will not be added to the pool.
-    /// </param>
     /// <returns>
     /// A collection of all the services found in the current app domain,
     /// or an empty enumeration in case that no discoverable service for
@@ -219,9 +176,9 @@ public static class DiscoverySupportExtensions
     /// a singleton with the same type or a compatible lazy factory
     /// registered.
     /// </remarks>
-    public static IEnumerable<T> DiscoverAll<T>(this FlexPool pool, bool persistent = true) where T : notnull
+    public static IEnumerable<T> DiscoverAll<T>(this Pool pool) where T : notnull
     {
-        return DiscoverAll<T>(pool, new DefaultDiscoveryEngine(), persistent);
+        return DiscoverAll<T>(pool, new DefaultDiscoveryEngine());
     }
 
     /// <summary>
@@ -237,13 +194,6 @@ public static class DiscoverySupportExtensions
     /// <param name="discoveryEngine">
     /// Discovery engine to use while searching for new instantiable types.
     /// </param>
-    /// <param name="persistent">
-    /// If set to <see langword="true"/>, in case a service of the
-    /// specified type hasn't been registered and a compatible type has
-    /// been discovered, the newly created instance will be registered
-    /// persistently in the pool. If set to <see langword="false"/>, any
-    /// discovered service will not be added to the pool.
-    /// </param>
     /// <returns>
     /// A collection of all the services found in the current app domain,
     /// or an empty enumeration in case that no discoverable service for
@@ -255,8 +205,8 @@ public static class DiscoverySupportExtensions
     /// a singleton with the same type or a compatible lazy factory
     /// registered.
     /// </remarks>
-    public static IEnumerable<T> DiscoverAll<T>(this FlexPool pool, IDiscoveryEngine discoveryEngine, bool persistent = true) where T : notnull
+    public static IEnumerable<T> DiscoverAll<T>(this Pool pool, IDiscoveryEngine discoveryEngine) where T : notnull
     {
-        return pool.ResolveAll<T>().Concat(DiscoverAll(pool, discoveryEngine, typeof(T), persistent).Cast<T>());
+        return ((T?[])[pool.Resolve<T>(), .. DiscoverAll(pool, discoveryEngine, typeof(T)).Cast<T>()]).Where(p => p is not null)!;
     }
 }

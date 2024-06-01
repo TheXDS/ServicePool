@@ -117,12 +117,20 @@
   <resheader name="writer">
     <value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
   </resheader>
-  <data name="CantInstantiate" xml:space="preserve">
+  <data name="MissingDependencies" xml:space="preserve">
     <value>Cannot create a new instance of the requested service. Either:
 - The type's constructor requied unavailable services.
+- A constructor was found, but it required arguments that caused a circular service reference.
+
+Try registering the service using an explicit factory, or with the RegisterNow(object?, bool)  method.</value>
+  </data>
+  <data name="ServiceAlreadyRegistered" xml:space="preserve">
+    <value>A service of type {0} was already registered on this pool.</value>
+  </data>
+  <data name="TypeNotInstantiable" xml:space="preserve">
+    <value>Cannot create a new instance of the requested service. Either:
 - The type doesn't have any valid public constructors.
 - The type is not instantiable (static, abstract).
-- A constructor was found, but it required arguments that caused a circular service reference.
 
 Try registering the service using an explicit factory, or with the RegisterNow(object?, bool)  method.</value>
   </data>

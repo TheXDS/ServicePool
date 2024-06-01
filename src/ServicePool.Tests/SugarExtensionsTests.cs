@@ -40,7 +40,7 @@ public class SugarExtensionsTests
     [Test]
     public void RegisterIf_T_skips_if_false()
     {
-        FlexPool? pool = new();
+        Pool pool = new();
         pool.RegisterIf<Random>(false);
         Assert.That(pool.Count, Is.Zero);
     }
@@ -48,7 +48,7 @@ public class SugarExtensionsTests
     [Test]
     public void RegisterIf_T_registers_if_true()
     {
-        FlexPool? pool = new();
+        Pool pool = new();
         pool.RegisterIf<Random>(true);
         Assert.That(pool.Count, Is.EqualTo(1));
     }
@@ -56,7 +56,7 @@ public class SugarExtensionsTests
     [Test]
     public void RegisterIf_with_factory_skips_if_false()
     {
-        FlexPool? pool = new();
+        Pool pool = new();
         pool.RegisterIf(false, DummyFactory);
         Assert.That(pool.Count, Is.Zero);
     }
@@ -64,7 +64,7 @@ public class SugarExtensionsTests
     [Test]
     public void RegisterIf_with_factory_registers_if_true()
     {
-        FlexPool? pool = new();
+        Pool pool = new();
         pool.RegisterIf(true, DummyFactory);
         Assert.That(pool.Count, Is.EqualTo(1));
     }
@@ -72,7 +72,7 @@ public class SugarExtensionsTests
     [Test]
     public void RegisterNowIf_T_skips_if_false()
     {
-        FlexPool? pool = new();
+        Pool pool = new();
         pool.RegisterNowIf<Random>(false);
         Assert.That(pool.Count, Is.Zero);
     }
@@ -80,7 +80,7 @@ public class SugarExtensionsTests
     [Test]
     public void RegisterNowIf_T_registers_if_true()
     {
-        FlexPool? pool = new();
+        Pool pool = new();
         pool.RegisterNowIf<Random>(true);
         Assert.That(pool.Count, Is.EqualTo(1));
     }
@@ -88,7 +88,7 @@ public class SugarExtensionsTests
     [Test]
     public void RegisterNowIf_with_singleton_skips_if_false()
     {
-        FlexPool? pool = new();
+        Pool pool = new();
         pool.RegisterNowIf(false, new Exception());
         Assert.That(pool.Count, Is.Zero);
     }
@@ -96,7 +96,7 @@ public class SugarExtensionsTests
     [Test]
     public void RegisterNowIf_with_singleton_registers_if_true()
     {
-        FlexPool? pool = new();
+        Pool pool = new();
         pool.RegisterNowIf(true, new Exception());
         Assert.That(pool.Count, Is.EqualTo(1));
     }

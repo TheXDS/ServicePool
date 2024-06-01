@@ -38,12 +38,12 @@ using TheXDS.ServicePool.TestTypes;
 
 namespace TheXDS.ServicePool.Tests;
 
-public class FlexPoolTests : PoolBaseTests<FlexPool>
+public class FlexPoolTests
 {
     [Test]
     public void Resolve_resolves_for_interfaces()
     {
-        FlexPool? pool = new();
+        Pool pool = new(PoolConfig.Flex);
         pool.Register<Test1>();
         Assert.That(pool.Resolve<ITest>(), Is.Not.Null);
     }
@@ -51,7 +51,7 @@ public class FlexPoolTests : PoolBaseTests<FlexPool>
     [Test]
     public void Resolve_resolves_for_base_class()
     {
-        FlexPool? pool = new();
+        Pool pool = new(PoolConfig.Flex);
         pool.Register<Test3>();
         Assert.That(pool.Resolve<Test1>(), Is.Not.Null);
     }
@@ -59,41 +59,30 @@ public class FlexPoolTests : PoolBaseTests<FlexPool>
     [Test]
     public void Discover_searches_for_service()
     {
-        FlexPool? pool = new();
+        Pool pool = new(PoolConfig.Flex);
         Assert.That(pool.Discover<Random>(), Is.InstanceOf<Random>());
-        Assert.That(pool.Count, Is.EqualTo(1));
     }
 
     [Test]
     public void Discover_returns_from_active_services()
     {
-        FlexPool? pool = new();
+        Pool pool = new(PoolConfig.Flex);
         pool.Register<Random>();
         var r = pool.Resolve<Random>();
         Assert.That(pool.Discover<Random>(), Is.SameAs(r));
     }
 
     [Test]
-    public void ResolveAll_returns_collection()
-    {
-        FlexPool pool = new();
-        pool.RegisterNow(new List<int>());
-        pool.RegisterNow(new Collection<int>());
-        pool.RegisterNow(Array.Empty<int>());
-        Assert.That(pool.ResolveAll<IEnumerable<int>>().Count(), Is.EqualTo(3));
-    }
-
-    [Test]
     public void DiscoverAll_enumerates_all_types_that_implement_base_type()
     {
-        FlexPool pool = new();
+        Pool pool = new(PoolConfig.Flex);
         Assert.That(pool.DiscoverAll<ITest>().ToArray().Length, Is.EqualTo(3));
     }
 
     [Test]
     public void DiscoverAll_skips_existing_services()
     {
-        FlexPool pool = new();
+        Pool pool = new(PoolConfig.Flex);
         pool.RegisterNow<Test1>();
         var t1 = pool.Resolve<Test1>();
         ITest[] c = pool.DiscoverAll<ITest>().ToArray();
@@ -106,7 +95,7 @@ public class FlexPoolTests : PoolBaseTests<FlexPool>
     [Test]
     public void DiscoverAll_allows_specifying_engine()
     {
-        FlexPool pool = new();
+        Pool pool = new(PoolConfig.Flex);
         ITest[] c = pool.DiscoverAll<ITest>(new DefaultDiscoveryEngine()).ToArray();
         Assert.That(c.Length, Is.EqualTo(3));        
     }
@@ -114,7 +103,7 @@ public class FlexPoolTests : PoolBaseTests<FlexPool>
     [Test]
     public void Discover_allows_specifying_engine()
     {
-        FlexPool pool = new();
+        Pool pool = new(PoolConfig.Flex);
         var c = pool.Discover<ITest>(new DefaultDiscoveryEngine());
         Assert.That(c, Is.Not.Null);
     }

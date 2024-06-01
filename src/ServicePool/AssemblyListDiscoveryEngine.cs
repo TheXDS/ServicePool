@@ -74,7 +74,23 @@ public class AssemblyListDiscoveryEngine : Collection<Assembly>, IDiscoveryEngin
     /// <inheritdoc/>
     public IEnumerable<Type> Discover(Type t)
     {
-        return this.SelectMany(p => p.GetTypes())
+        return this.SelectMany(SafeGetTypes)
             .Where(p => !p.IsAbstract && !p.IsInterface && t.IsAssignableFrom(p));
+    }
+
+    private Type[] SafeGetTypes(Assembly asm)
+    {
+        try
+        {
+            return asm.GetTypes();
+        }
+        catch (ReflectionTypeLoadException e)
+        {
+            return e.Types.Where(p => p is not null).ToArray()!;
+        }
+        catch
+        {
+            return [];
+        }
     }
 }

@@ -1,4 +1,4 @@
-﻿// Common.cs
+﻿// ServiceAlreadyRegisteredException.cs
 //
 // This file is part of ServicePool
 //
@@ -26,43 +26,43 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-namespace TheXDS.ServicePool.Extensions;
+using System;
+using Ers = TheXDS.ServicePool.Resources.Strings.Errors;
+
+namespace TheXDS.ServicePool.Exceptions;
 
 /// <summary>
-/// Includes a set of useful extension methods to work with ServicePool.
+/// Exception thrown when the user tries to register a service of a type that
+/// has been registered already on a <see cref="Pool"/>.
 /// </summary>
-public static class Common
+public class ServiceAlreadyRegisteredException : Exception
 {
     /// <summary>
-    /// Adds support for Fluent singleton registration on any object type.
+    /// Initializes a new instance of the
+    /// <see cref="ServiceAlreadyRegisteredException"/> class.
     /// </summary>
-    /// <typeparam name="T">
-    /// Type of object to register into the pool.
-    /// </typeparam>
-    /// <param name="obj">Instance to register.</param>
-    /// <param name="pool">Pool to register the singleton into.</param>
-    /// <returns>The same instance as <paramref name="obj"/>.</returns>
-    public static T RegisterInto<T>(this T obj, Pool pool) where T : notnull
+    public ServiceAlreadyRegisteredException() : base(Ers.ServiceAlreadyRegistered)
     {
-        pool.RegisterNow(obj);
-        return obj;
     }
 
     /// <summary>
-    /// Adds support for Fluent singleton registration on any object type.
+    /// Initializes a new instance of the
+    /// <see cref="ServiceAlreadyRegisteredException"/> class.
     /// </summary>
-    /// <typeparam name="T">
-    /// Type of object to register into the pool.
-    /// </typeparam>
-    /// <param name="obj">Instance to register.</param>
-    /// <param name="pool">Pool to register the singleton into.</param>
-    /// <param name="condition">
-    /// Value that determines if the singleton should be registered or not.
-    /// </param>
-    /// <returns>
-    /// The same instance as <paramref name="obj"/>.</returns>
-    public static T RegisterIntoIf<T>(this T obj, Pool pool, bool condition) where T : notnull
+    /// <param name="message">Message that describes the exception.</param>
+    public ServiceAlreadyRegisteredException(string? message) : base(message)
     {
-        return condition ? obj.RegisterInto(pool) : obj;
+    }
+
+    /// <summary>
+    /// Initializes a new instance of the
+    /// <see cref="ServiceAlreadyRegisteredException"/> class.
+    /// </summary>
+    /// <param name="message">Message that describes the exception.</param>
+    /// <param name="innerException">
+    /// <see cref="Exception"/> that is the cause of this exception.
+    /// </param>
+    public ServiceAlreadyRegisteredException(string? message, Exception? innerException) : base(message, innerException)
+    {
     }
 }

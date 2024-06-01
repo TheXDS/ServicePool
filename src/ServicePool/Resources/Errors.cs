@@ -27,6 +27,8 @@
 // SOFTWARE.
 
 using System;
+using System.Collections;
+using TheXDS.ServicePool.Exceptions;
 using Ers = TheXDS.ServicePool.Resources.Strings.Errors;
 
 namespace TheXDS.ServicePool.Resources;
@@ -37,15 +39,38 @@ namespace TheXDS.ServicePool.Resources;
 public static class Errors
 {
     /// <summary>
-    /// Gets an <see cref="InvalidOperationException"/> that is normally
-    /// thrown when a class inside the pool cannot be instantiated.
+    /// Gets a new instance of a <see cref="ServiceAlreadyRegisteredException"/>
+    /// that is normally thrown when the user tries to register a service of a
+    /// type that has been registered already on a <see cref="Pool"/>.
     /// </summary>
     /// <returns>
-    /// An <see cref="InvalidOperationException"/> with a custom error
-    /// message.
+    /// A new instance of the <see cref="ServiceAlreadyRegisteredException"/>
+    /// class.
     /// </returns>
-    public static InvalidOperationException CantInstantiate()
-    {
-        return new InvalidOperationException(Ers.CantInstantiate);
-    }
+    public static ServiceAlreadyRegisteredException ServiceAlreadyRegistered() => new();
+
+    /// <summary>
+    /// Gets a new instance of the <see cref="TypeNotInstantiableException"/>
+    /// that is normally thrown when a type is not instantiable; that is, when
+    /// the type is abstract, static or it does not have any public constructors.
+    /// </summary>
+    /// <param name="t">
+    /// Offending type that is the cause of the exception.
+    /// </param>
+    /// <returns>
+    /// A new instance of the <see cref="TypeNotInstantiableException"/> class.
+    /// </returns>
+    public static TypeNotInstantiableException TypeNotInstantiable(Type t) => new(t);
+
+    /// <summary>
+    /// Gets a new instance of the <see cref="MissingDependencyException"/>
+    /// that is normally thrown when trying to instantiate a service type and
+    /// not being able to find a suitable collection of dependencies to inject
+    /// while searching for a constructor.
+    /// </summary>
+    /// <param name="t">Array of dependency types that were requested.</param>
+    /// <returns>
+    /// A new instance of the <see cref="MissingDependencyException"/> class.
+    /// </returns>
+    public static MissingDependencyException MissingDependency(Type[][] t) => new(t);
 }

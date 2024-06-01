@@ -28,6 +28,38 @@
 
 #pragma warning disable CS1591
 
+using NUnit.Framework;
+using System;
+using TheXDS.ServicePool.Extensions;
+
 namespace TheXDS.ServicePool.Tests;
 
-public class PoolExtensionsTests : CommonExtensionsTests<Pool> { }
+public class PoolExtensionsTests
+{
+    [Test]
+    public void RegisterInto_registers_singleton()
+    {
+        var pool = new Pool();
+        var x = new Random().RegisterInto(pool);
+        Assert.That(x, Is.InstanceOf<Random>());
+        Assert.That(pool.Resolve<Random>(), Is.SameAs(x));
+    }
+
+    [Test]
+    public void RegisterIntoIf_registers_if_true()
+    {
+        var pool = new Pool();
+        var x = new Random().RegisterIntoIf(pool, true);
+        Assert.That(x, Is.InstanceOf<Random>());
+        Assert.That(pool.Resolve<Random>(), Is.SameAs(x));
+    }
+
+    [Test]
+    public void RegisterIntoIf_returns_object_if_false()
+    {
+        var pool = new Pool();
+        var x = new Random().RegisterIntoIf(pool, false);
+        Assert.That(x, Is.InstanceOf<Random>());
+        Assert.That(pool.Resolve<Random>(), Is.Null);
+    }
+}

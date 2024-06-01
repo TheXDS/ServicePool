@@ -30,25 +30,11 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
+using System.Reflection;
 using System.Runtime.CompilerServices;
+using TheXDS.ServicePool.Resources;
 
 namespace TheXDS.ServicePool;
-
-/// <summary>
-/// Contains a set of configuratino values to be used when instanciating a new
-/// <see cref="Pool"/>.
-/// </summary>
-/// <param name="FlexRegistration">
-/// Indicates whether or not flexible registration should be used when calling
-/// <see cref="Pool.RegisterNow(object)"/>.
-/// </param>
-public record struct PoolConfig(bool FlexRegistration)
-{
-    /// <summary>
-    /// Represents the default configuration for a <see cref="Pool"/>.
-    /// </summary>
-    public static readonly PoolConfig Default = new();
-}
 
 /// <summary>
 /// Represents a collection of hosted services that can be instantiated and 
@@ -56,14 +42,13 @@ public record struct PoolConfig(bool FlexRegistration)
 /// resolution type they have registered, and only allowing a single type per
 /// pool to be registered.
 /// </summary>
-public class Pool(PoolConfig config) : PoolBase
+public sealed class Pool(PoolConfig config) : IEnumerable
 {
-    private readonly PoolConfig _config = config;
+    private record FactoryEntry(in bool Persistent, in Func<object> Factory);
 
-    private Type[] GetRegTypes(Type source)
-    {
-        return [source, .. (_config.FlexRegistration ? source.GetInterfaces() : [])];
-    }
+    private readonly PoolConfig _config = config;
+    private readonly Dictionary<Type, FactoryEntry> _factories = [];
+    private readonly Dictionary<Type, object> _instances = [];
 
     /// <summary>
     /// Initializes a new instance of the <see cref="Pool"/> class using the
@@ -71,57 +56,211 @@ public class Pool(PoolConfig config) : PoolBase
     /// </summary>
     public Pool() : this(PoolConfig.Default)
     {
-        
     }
 
     /// <summary>
-    /// Gets a dictionary of all factories registered to generate
-    /// lazily-initialized services.
+    /// Gets a count of all the registered services in this pool.
     /// </summary>
-    protected Dictionary<Type, FactoryEntry> Factories { get; } = [];
+    public int Count => _instances.Count + _factories.Count;
 
     /// <summary>
-    /// Gets a dictionary of all persistent singletons currently active on this
-    /// pool instance.
+    /// Resolves and then removes a registered service from this service
+    /// pool.
     /// </summary>
-    protected Dictionary<Type, object> Instances { get; } = [];
+    /// <typeparam name="T">Type of service to consume.</typeparam>
+    /// <returns>
+    /// The first service that implements <typeparamref name="T"/> found on
+    /// the pool, or <see langword="null"/> if no such service has been
+    /// registered.
+    /// </returns>
+    public T? Consume<T>() where T : notnull => (T?)Consume(typeof(T));
 
-    /// <inheritdoc/>
-    public override int Count => Instances.Count + Factories.Count;
-
-    /// <inheritdoc/>
-    public override void Register(Type objectType, bool persistent = true)
+    /// <summary>
+    /// Resolves and then removes a registered service from this service
+    /// pool.
+    /// </summary>
+    /// <param name="objectType">Type of service to consume.</param>
+    /// <returns>
+    /// The first service that implements <paramref name="objectType"/> found
+    /// on the pool, or <see langword="null"/> if no such service has been
+    /// registered.
+    /// </returns>
+    public object? Consume(Type objectType)
     {
-         Register(objectType, GetRegTypes(objectType), persistent);
+        object? obj = Resolve(objectType);
+        if (obj is not null) _ = Remove(objectType);
+        return obj;
     }
 
-    /// <inheritdoc/>
-    public override void Register<T>(Func<T> factory, bool persistent = true)
+    /// <summary>
+    /// Registers a lazily-instantiated service.
+    /// </summary>
+    /// <typeparam name="T">Type of object to register.</typeparam>
+    /// <param name="persistent">
+    /// If set to <see langword="true"/>, the resolved object is going to be
+    /// persisted in the service pool (it will be a Singleton). When 
+    /// <see langword="false"/>, the registered service will be instantiated
+    /// and initialized each time it is requested (it will be transient).
+    /// </param>
+    public void Register<T>(bool persistent = true) where T : notnull => Register(typeof(T), persistent);
+
+    /// <summary>
+    /// _instances and registers a service of type
+    /// <typeparamref name="T"/>.
+    /// </summary>
+    /// <param name="singleton">Singleton instance to register.</param>
+    /// <typeparam name="T">Type of service to register.</typeparam>
+    public void RegisterNow<T>(T singleton) where T : notnull => RegisterNow((object)singleton);
+
+    /// <summary>
+    /// _instances and registers a new service of type
+    /// <typeparamref name="T"/>.
+    /// </summary>
+    /// <typeparam name="T">Type of service to register.</typeparam>
+    public void RegisterNow<T>() where T : notnull => RegisterNow(CreateInstance(typeof(T)));
+
+    /// <summary>
+    /// Tries to resolve a service that implements the specified interface 
+    /// or base type.
+    /// </summary>
+    /// <typeparam name="T">Type of service to get.</typeparam>
+    /// <returns>
+    /// The first service that implements <typeparamref name="T"/> found on
+    /// the pool, or <see langword="null"/> if no such service has been
+    /// registered.
+    /// </returns>
+    public T? Resolve<T>() where T : notnull => (T?)Resolve(typeof(T));
+
+    /// <summary>
+    /// Tries to resolve a service that implements the specified interface 
+    /// or base type.
+    /// </summary>
+    /// <param name="objectType">Type of service to get.</param>
+    /// <returns>
+    /// The first service that implements <paramref name="objectType"/> found
+    /// on the pool, or <see langword="null"/> if no such service has been
+    /// registered.
+    /// </returns>
+    public object? Resolve(Type objectType)
     {
-        Register(() => factory(), GetRegTypes(typeof(T)), persistent);
+        return ResolveActive(objectType) ?? ResolveLazy(objectType);
     }
 
-    /// <inheritdoc/>
-    public override void RegisterNow(object singleton)
+    /// <summary>
+    /// Removes a registered service from this service pool.
+    /// </summary>
+    /// <typeparam name="T">Type of service to remove.</typeparam>
+    /// <returns>
+    /// <see langword="true"/> if a registered service matching the
+    /// requested type was found and removed from the pool,
+    /// <see langword="false"/> otherwise.
+    /// </returns>
+    public bool Remove<T>() => Remove(typeof(T));
+
+    /// <summary>
+    /// Creates a new instance of the specified type, resolving its required
+    /// dependencies from the registered services on this instance.
+    /// </summary>
+    /// <param name="t">Type of object to instance.</param>
+    /// <returns>
+    /// A new instance of the specified type, or <see langword="null"/> if the
+    /// specified type cannot be instantiated given its required dependencies.
+    /// </returns>
+    public object? CreateInstanceOrNull(Type t)
     {
-        RegisterNow(singleton, GetRegTypes(singleton.GetType()));
+        if (t.IsAbstract || t.IsInterface) return null;
+        return CreateInstance_Internal(t);
     }
 
-    /// <inheritdoc/>
-    public override void InitNow()
+    /// <summary>
+    /// Creates a new instance of the specified type, resolving its required
+    /// dependencies from the registered services on this instance.
+    /// </summary>
+    /// <param name="t">Type of object to instance.</param>
+    /// <returns>A new instance of the specified type.</returns>
+    /// <exception cref="InvalidOperationException">
+    /// Thrown if the requested service could not be created given its required
+    /// dependencies.
+    /// </exception>
+    public object CreateInstance(Type t)
     {
-        var entries = Factories.Where(p => p.Value.Persistent).ToArray();
+        ConstructorInfo[]? ctors = null;
+        if (t.IsAbstract || t.IsInterface || (ctors = EnumerateCtors(t).ToArray()).Length == 0)
+        {
+            throw Errors.TypeNotInstantiable(t);
+        }
+        return CreateInstance_Internal(t) 
+            ?? throw Errors.MissingDependency(ctors.Select(q => q.GetParameters()).Select(p => p.Select(r => r.ParameterType).ToArray()).ToArray());
+    }
+
+    /// <summary>
+    /// Registers a lazily-instantiated service.
+    /// </summary>
+    /// <param name="objectType">Type of object to register.</param>
+    /// <param name="persistent">
+    /// If set to <see langword="true"/>, the resolved object is going to be
+    /// persisted in the service pool (it will be a Singleton). When 
+    /// <see langword="false"/>, the registered service will be instantiated
+    /// and initialized each time it is requested (it will be transient).
+    /// </param>
+    public void Register(Type objectType, bool persistent = true)
+    {
+         Register(objectType, _config.TypeRegistrations(objectType), persistent);
+    }
+
+    /// <summary>
+    /// Registers a lazily-instantiated service.
+    /// </summary>
+    /// <typeparam name="T">Type of service to register.</typeparam>
+    /// <param name="factory">Object factory to use.</param>
+    /// <param name="persistent">
+    /// If set to <see langword="true"/>, the resolved object is going to be
+    /// persisted in the service pool (it will be a Singleton). When 
+    /// <see langword="false"/>, the registered service will be instantiated
+    /// and initialized each time it is requested (it will be transient).
+    /// </param>
+    public void Register<T>(Func<T> factory, bool persistent = true) where T : notnull
+    {
+        Register(() => factory(), _config.TypeRegistrations(typeof(T)), persistent);
+    }
+
+    /// <summary>
+    /// Registers an active sigleton instance as a service on this pool.
+    /// </summary>
+    /// <param name="singleton">
+    /// Active instance to register.
+    /// </param>
+    public void RegisterNow(object singleton)
+    {
+        RegisterNow(singleton, _config.TypeRegistrations(singleton.GetType()));
+    }
+
+    /// <summary>
+    /// Initializes all registered services marked as persistent using
+    /// their respective registered factories.
+    /// </summary>
+    public void InitNow()
+    {
+        var entries = _factories.Where(p => p.Value.Persistent).ToArray();
         foreach (var entry in entries)
         {
-            Factories.Remove(entry.Key);
+            _factories.Remove(entry.Key);
             RegisterNow(entry.Value.Factory());
         }
     }
 
-    /// <inheritdoc/>
-    public override bool Remove(Type objectType)
+    /// <summary>
+    /// Removes a registered service from this service pool.
+    /// </summary>
+    /// <param name="objectType">Type of service to remove.</param>
+    /// <returns>
+    /// <see langword="true"/> if a registered service matching the
+    /// requested type was found and removed from the pool,
+    /// <see langword="false"/> otherwise.
+    /// </returns>
+    public bool Remove(Type objectType)
     {
-        return Instances.Remove(objectType) || Factories.Remove(objectType);
+        return _instances.Remove(objectType) || _factories.Remove(objectType);
     }
 
     /// <summary>
@@ -135,12 +274,12 @@ public class Pool(PoolConfig config) : PoolBase
     /// <returns>
     /// This same service pool instance, allowing the use of Fluent syntax.
     /// </returns>
-    public void RegisterNow(object singleton, Type[] typeRegistrations)
+    public void RegisterNow(object singleton, IEnumerable<Type> typeRegistrations)
     {
         CheckUniqueType(typeRegistrations);
         foreach (var j in typeRegistrations)
         {
-            Instances.Add(j, singleton);
+            _instances.Add(j, singleton);
         }
     }
 
@@ -161,12 +300,12 @@ public class Pool(PoolConfig config) : PoolBase
     /// <returns>
     /// This same service pool instance, allowing the use of Fluent syntax.
     /// </returns>
-    public void Register(Func<object> factory, Type[] typeRegistrations, bool persistent = true)
+    public void Register(Func<object> factory, IEnumerable<Type> typeRegistrations, bool persistent = true)
     {
         CheckUniqueType(typeRegistrations);
         foreach (var j in typeRegistrations)
         {
-            Factories.Add(j, new(persistent, factory));
+            _factories.Add(j, new(persistent, factory));
         }
     }
 
@@ -187,7 +326,7 @@ public class Pool(PoolConfig config) : PoolBase
     /// <returns>
     /// This same service pool instance, allowing the use of Fluent syntax.
     /// </returns>
-    public void Register(Type objectType, Type[] typeRegistrations, bool persistent = true)
+    public void Register(Type objectType, IEnumerable<Type> typeRegistrations, bool persistent = true)
     {
         Register(() => CreateInstance(objectType), typeRegistrations, persistent);
     }
@@ -238,18 +377,16 @@ public class Pool(PoolConfig config) : PoolBase
     }
 
     /// <inheritdoc/>
-    public override IEnumerator GetEnumerator() => Instances.Values.Concat(Factories.Select(CreateFromLazy)).GetEnumerator();
+    public IEnumerator GetEnumerator() => _instances.Values.Concat(_factories.Select(CreateFromLazy)).GetEnumerator();
 
-    /// <inheritdoc/>
-    protected override object? ResolveLazy(Type objectType)
+    private object? ResolveLazy(Type objectType)
     {
-        return Factories.TryGetValue(objectType, out FactoryEntry? factory) ? CreateFromLazy(objectType, factory) : null;
+        return _factories.TryGetValue(objectType, out FactoryEntry? factory) ? CreateFromLazy(objectType, factory) : null;
     }
 
-    /// <inheritdoc/>
-    protected override object? ResolveActive(Type objectType)
+    private object? ResolveActive(Type objectType)
     {
-        return Instances.TryGetValue(objectType, out var service) ? service : null;
+        return _instances.TryGetValue(objectType, out var service) ? service : null;
     }
 
     private object CreateFromLazy(KeyValuePair<Type, FactoryEntry> entry) => CreateFromLazy(entry.Key, entry.Value);
@@ -259,16 +396,50 @@ public class Pool(PoolConfig config) : PoolBase
         var obj = factory.Factory.Invoke();
         if (factory.Persistent)
         {
-            Factories.Remove(objectType);
-            Instances.Add(objectType, obj);
+            _factories.Remove(objectType);
+            _instances.Add(objectType, obj);
         }
         return obj;
+    }
+
+    private bool IsValidCtor(ConstructorInfo ctor, Type targetType, out object[]? args)
+    {
+        ParameterInfo[] pars = ctor.GetParameters();
+        List<object> a = [];
+        foreach (ParameterInfo arg in pars)
+        {
+            var value =
+                (targetType.IsAssignableFrom(arg.ParameterType) ? ResolveActive(arg.ParameterType) : Resolve(arg.ParameterType)) ??
+                (arg.IsOptional ? Type.Missing : null);
+            if (value is null) break;
+            a.Add(value);
+        }
+        return (args = a.Count == pars.Length ? [.. a] : null) is not null;
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     private void CheckUniqueType(IEnumerable<Type> newKeys)
     {
-        var existingKeys = Instances.Keys.Concat(Factories.Keys).ToArray();
-        if (newKeys.Any(existingKeys.Contains)) throw new InvalidOperationException();
+        var existingKeys = _instances.Keys.Concat(_factories.Keys).ToArray();
+        if (newKeys.Any(existingKeys.Contains)) throw Errors.ServiceAlreadyRegistered();
+    }
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    private static IEnumerable<ConstructorInfo> EnumerateCtors(Type t)
+    {
+        return t.GetConstructors().OrderByDescending(p => p.GetParameters().Length);
+    }
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    private object? CreateInstance_Internal(Type t)
+    {
+        foreach (ConstructorInfo ctor in EnumerateCtors(t))
+        {
+            if (IsValidCtor(ctor, t, out var args))
+            {
+                return ctor.Invoke(args);
+            }
+        }
+        return null;
     }
 }

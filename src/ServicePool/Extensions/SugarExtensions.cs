@@ -52,7 +52,7 @@ public static class SugarExtensions
     /// <see langword="false"/>, the registered service will be instantiated
     /// and initialized each time it is requested (it will be transient).
     /// </param>
-    public static void RegisterIf<T>(this PoolBase pool, bool condition, bool persistent = true) where T : notnull
+    public static void RegisterIf<T>(this Pool pool, bool condition, bool persistent = true) where T : notnull
     {
         if (condition) pool.Register<T>(persistent);
     }
@@ -74,7 +74,7 @@ public static class SugarExtensions
     /// <see langword="false"/>, the registered service will be instantiated
     /// and initialized each time it is requested (it will be transient).
     /// </param>
-    public static void RegisterIf<T>(this PoolBase pool, bool condition, Func<T> factory, bool persistent = true) where T : notnull
+    public static void RegisterIf<T>(this Pool pool, bool condition, Func<T> factory, bool persistent = true) where T : notnull
     {
         if (condition) pool.Register(factory, persistent);
     }
@@ -90,7 +90,7 @@ public static class SugarExtensions
     /// registered; otherwise no action is taken.
     /// </param>
     /// <param name="singleton">Object instance to register.</param>
-    public static void RegisterNowIf<T>(this PoolBase pool, bool condition, T singleton) where T : notnull
+    public static void RegisterNowIf<T>(this Pool pool, bool condition, T singleton) where T : notnull
     {
         if (condition) pool.RegisterNow(singleton);
     }
@@ -105,7 +105,7 @@ public static class SugarExtensions
     /// If this value evals to <see langword="true"/>, the service will be
     /// registered; otherwise no action is taken.
     /// </param>
-    public static void RegisterNowIf<T>(this PoolBase pool, bool condition) where T : notnull
+    public static void RegisterNowIf<T>(this Pool pool, bool condition) where T : notnull
     {
         if (condition) pool.RegisterNow<T>();
     }

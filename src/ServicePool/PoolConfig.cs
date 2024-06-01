@@ -1,4 +1,4 @@
-﻿// CommonExtensionsTests.cs
+﻿// Pool.cs
 //
 // This file is part of ServicePool
 //
@@ -26,40 +26,47 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-#pragma warning disable CS1591
-
-using NUnit.Framework;
 using System;
-using TheXDS.ServicePool.Extensions;
+using System.Collections.Generic;
 
-namespace TheXDS.ServicePool.Tests;
+namespace TheXDS.ServicePool;
 
-public abstract class CommonExtensionsTests<T> where T : PoolBase, new()
+/// <summary>
+/// Contains a set of configuration values to be used when instanciating a new
+/// <see cref="Pool"/>.
+/// </summary>
+public readonly record struct PoolConfig
 {
-    [Test]
-    public void RegisterInto_registers_singleton()
-    {
-        var pool = new T();
-        var x = new Random().RegisterInto(pool);
-        Assert.That(x, Is.InstanceOf<Random>());
-        Assert.That(pool.Resolve<Random>(), Is.SameAs(x));
-    }
+    /// <summary>
+    /// Defines the logic to use when enumerating the types to register a
+    /// specific service type for.
+    /// </summary>
+    public required Func<Type, IEnumerable<Type>> TypeRegistrations { get; init; }
 
-    [Test]
-    public void RegisterIntoIf_registers_if_true()
+    /// <summary>
+    /// Represents the default configuration for a <see cref="Pool"/>.
+    /// </summary>
+    public static readonly PoolConfig Default = new() 
     {
-        var pool = new Pool();
-        var x = new Random().RegisterIntoIf(pool, true);
-        Assert.That(x, Is.InstanceOf<Random>());
-        Assert.That(pool.Resolve<Random>(), Is.SameAs(x));
-    }
+        TypeRegistrations = t => [t]
+    };
 
-    [Test]
-    public void RegisterIntoIf_returns_object_if_false()
+    /// <summary>
+    /// Represents the configuration to use for a <see cref="Pool"/> that can
+    /// resolve a single service type based on its entire inheritance tree and
+    /// all the interfaces it implements.
+    /// </summary>
+    public static readonly PoolConfig Flex = new() {
+        TypeRegistrations = t => [t, ..GetBaseTypes(t), ..t.GetInterfaces()]
+    };
+
+    private static IEnumerable<Type> GetBaseTypes(Type t)
     {
-        var pool = new FlexPool();
-        var x = new Random().RegisterIntoIf(pool, false);
-        Assert.That(x, Is.InstanceOf<Random>());
-        Assert.That(pool.Resolve<Random>(), Is.Null);
+        var i = t.BaseType;
+        while (i is not null)
+        {
+            yield return i;
+            i = i.BaseType;
+        }
     }
 }
