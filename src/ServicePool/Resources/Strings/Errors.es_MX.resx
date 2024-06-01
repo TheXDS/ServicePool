@@ -117,13 +117,21 @@
   <resheader name="writer">
     <value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
   </resheader>
-  <data name="CantInstantiate" xml:space="preserve">
+  <data name="MissingDependencies" xml:space="preserve">
     <value>No se pudo crear una nueva instancia del servicio solicitado. Esto puede deberse a que:
 - El constructor del tipo requiere servicios no disponibles.
-- El tipo no contiene ningún constructor válido.
-- El tipo no es instanciable (estático, abstracto).
 - Se encontró un constructor, pero requiere de argumentos que causan una referencia circular de servicios.
 
 Intente registrar el servicio utilizando una fábrica explícita, o llamando al método RegisterNow(object?, bool).</value>
+  </data>
+  <data name="TypeNotInstantiable" xml:space="preserve">
+    <value>No se pudo crear una nueva instancia del servicio solicitado. Esto puede deberse a que:
+- El tipo no contiene ningún constructor válido.
+- El tipo no es instanciable (estático, abstracto).
+
+Intente registrar el servicio utilizando una fábrica explícita, o llamando al método RegisterNow(object?, bool).</value>
+  </data>
+  <data name="ServiceAlreadyRegistered" xml:space="preserve">
+    <value>Un servicio de tipo {0} ya ha sido registrado en este Pool.</value>
   </data>
 </root>

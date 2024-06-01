@@ -57,6 +57,14 @@ public class PoolTests
     }
 
     [Test]
+    public void Pool_throws_on_registration_already_existing()
+    {
+        Pool pool = new();
+        pool.Register<Random>();
+        Assert.That(() => pool.Register<Random>(), Throws.InstanceOf<ServiceAlreadyRegisteredException>());
+    }
+
+    [Test]
     public void Pool_registers_and_resolves_cached_services()
     {
         Pool pool = new();
