@@ -1,13 +1,13 @@
 # ServicePool
 
 [![CodeFactor](https://www.codefactor.io/repository/github/thexds/servicepool/badge)](https://www.codefactor.io/repository/github/thexds/servicepool)
-[![Build MCART](https://github.com/TheXDS/ServicePool/actions/workflows/build.yml/badge.svg)](https://github.com/TheXDS/ServicePool/actions/workflows/build.yml)
-[![Publish MCART](https://github.com/TheXDS/ServicePool/actions/workflows/publish.yml/badge.svg)](https://github.com/TheXDS/ServicePool/actions/workflows/publish.yml)
+[![Build ServicePool](https://github.com/TheXDS/ServicePool/actions/workflows/build.yml/badge.svg)](https://github.com/TheXDS/ServicePool/actions/workflows/build.yml)
+[![Publish ServicePool](https://github.com/TheXDS/ServicePool/actions/workflows/publish.yml/badge.svg)](https://github.com/TheXDS/ServicePool/actions/workflows/publish.yml)
 [![Issues](https://img.shields.io/github/issues/TheXDS/ServicePool)](https://github.com/TheXDS/ServicePool/issues)
 [![codecov](https://codecov.io/gh/TheXDS/ServicePool/branch/master/graph/badge.svg?token=Rve4awcyup)](https://codecov.io/gh/TheXDS/ServicePool)
-[![GPL-v3.0](https://img.shields.io/github/license/TheXDS/ServicePool)](https://www.gnu.org/licenses/gpl-3.0.en.html)
+[![MIT](https://img.shields.io/github/license/TheXDS/ServicePool)](https://mit-license.org/)
 
-ServicePool is a customizable dependency injection library that offers the well-known benefits of DI as seen on ASP.Net projects, but extends on this concept by offering different kinds of service comsumption models (singletons, factories, one-offs) and the ability to have more that one pool with a set of independently resolved services.
+ServicePool is a customizable dependency injection library that offers the well-known benefits of DI as seen on ASP.Net projects, but extends on this concept by offering different kinds of service comsumption models (singletons, factories, one-offs) and the ability to have more than one pool with a set of independently resolved services.
 
 The dependency injection model implemented by this library also adds a bit more flexibility when resolving dependencies for a class, even allowing a consumer app to specify its own resolution logic.
 
@@ -34,19 +34,19 @@ paket add TheXDS.ServicePool
 
 **Package reference**  
 ```xml
-<PackageReference Include="TheXDS.ServicePool" Version="1.0.4" />
+<PackageReference Include="TheXDS.ServicePool" Version="2.0.0" />
 ```
 
 **C# interactive window (CSI)**  
 ```
-#r "nuget: TheXDS.ServicePool, 1.0.4"
+#r "nuget: TheXDS.ServicePool, 2.0.0"
 ```
 
 ## Building
 ServicePool can be built on any platform or CI environment supported by dotnet.
 
 ### Prerequisites
-- [.Net SDK 6.0](https://dotnet.microsoft.com/)
+- [.Net SDK 8.0](https://dotnet.microsoft.com/)
 
 ### Build ServicePool
 ```sh
@@ -59,7 +59,7 @@ The resulting binaries will be in the `./Build/bin` directory.
 dotnet test ./src/ServicePool.sln
 ```
 #### Coverage reports
-It is possible to generate a coverage report locally.For that, it is necessary to install [`ReportGenerator`](https://github.com/danielpalme/ReportGenerator), which will read the test results after execution, and will generate a web page with the coverage results.
+It is possible to generate a coverage report locally. For that, it is necessary to install [`ReportGenerator`](https://github.com/danielpalme/ReportGenerator), which will read the test results after execution, and will generate a web page with the coverage results.
 
 To install `ReportGenerator` execute:
 ```sh
