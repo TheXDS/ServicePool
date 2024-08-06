@@ -8,11 +8,9 @@ Welcome to the **`ServicePool`** documentation! in this page, you'll find inform
 The dependency injection model implemented by this library also adds a bit more flexibility when resolving dependencies for a class, even allowing a consumer app to specify its own resolution logic.
 
 ## Features of ServicePool
-By design, **`ServicePool`** can be used in one of several ways. You can just use the `ServicePool` class statically, or create instances of it to granularly control your services and their dependencies.
+**`ServicePool`** allows you to define your own pool of services, where any dependencies needed by them will be resolved from the local collection of registered services.
 ```cs
-ServicePool.CommonPool.Register<Random>();
-// ...or
-var myPool = new ServicePool();
+var myPool = new Pool();
 myPool.Register<Random>();
 ```
 
@@ -20,6 +18,21 @@ You can also ask **`ServicePool`** to automatically discover any type you need w
 ```cs
 var myService = myPool.Discover<ILogger>();
 ```
+
+A pool may be created using different configuration modes, using pre-defined config values from the `PoolConfig` record struct, or you can create your own, effectively customizing how your pool works.
+```cs
+var myPool = new Pool(PoolConfig.FlexResolve);
+```
+
+Going a bit further, you have the ability to fine-tune the dependency resolution used by **`ServicePool`** to discover dependencies for a service without having to register any of these. This is done overriding the available property on the configuration being passed onto your pool.
+```cs
+var myPool = new Pool(PoolConfig.FlexResolve with
+{ 
+    DependencyResolver = (pool, type) => pool.Discover(type)
+});
+var myService = myPool.Discover<ILogger>();
+```
+Several properties are available to fine-tune how your service pool works.
 
 There's also more than one consumption model. You can register services that live forever in the pool, remaining active and available for resolution. This is useful for classes that need to preserve state or that must be active in the background (like a telemetry service) or instances that can be shared across several classes (like a single Log service available for everyone). You can also register services that once consumed, will be removed permanently from the pool. A use case for this can be for security and encryption, where there must not be a remmanant of either the encryption class nor its configuration. Also, you can choose to use the well-known classic consuption model available in other *dependency injection* libraries, where once requested, a new instance of the service will be created.
 ```cs

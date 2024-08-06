@@ -28,6 +28,8 @@
 
 using System;
 using System.Collections.Generic;
+using System.Reflection;
+using System.Linq;
 
 namespace TheXDS.ServicePool;
 
@@ -38,26 +40,95 @@ namespace TheXDS.ServicePool;
 public readonly record struct PoolConfig
 {
     /// <summary>
+    /// Defines the logic to use when resolving a dependency for a service that
+    /// needs to be instanced.
+    /// </summary>
+    public required Func<Pool, Type, object?> DependencyResolver { get; init; }
+
+    /// <summary>
+    /// Gets a value that indicates if the <see cref="Pool"/> itself can be
+    /// resolved as a service.
+    /// </summary>
+    public required bool SelfRegister { get; init; }
+
+    /// <summary>
     /// Defines the logic to use when enumerating the types to register a
     /// specific service type for.
     /// </summary>
     public required Func<Type, IEnumerable<Type>> TypeRegistrations { get; init; }
 
     /// <summary>
+    /// Defines the logic to be used when trying to resolve a service type from
+    /// the Factory entry dictionary.
+    /// </summary>
+    public required Func<Type, IDictionary<Type, Pool.FactoryEntry>, Pool.FactoryEntry?> FactoryResolver { get; init; }
+
+    /// <summary>
+    /// Defines the logic to be used when trying to resolve a service type from
+    /// the active service collection.
+    /// </summary>
+    public required Func<Type, IDictionary<Type, object>, object?> ActiveResolver { get; init; }
+
+    /// <summary>
+    /// Gets a reference to the <see cref="IDiscoveryEngine"/> to use when the
+    /// user requests the pool to discover services.
+    /// </summary>
+    public required IDiscoveryEngine DiscoveryEngine { get; init; }
+
+    /// <summary>
+    /// Defines the logic to use when enumerating the constructors available
+    /// for a type when resolving dependencies.
+    /// </summary>
+    public required Func<Type, IEnumerable<ConstructorInfo>> ConstructorEnumeration { get; init; }
+
+    /// <summary>
     /// Represents the default configuration for a <see cref="Pool"/>.
     /// </summary>
     public static readonly PoolConfig Default = new() 
     {
-        TypeRegistrations = t => [t]
+        DependencyResolver = (p, t) => p.Resolve(t),
+        SelfRegister = true,
+        TypeRegistrations = t => [t],
+        ActiveResolver = (t, d) => d.TryGetValue(t, out var v) ? v : null,
+        FactoryResolver = (t, d) => d.TryGetValue(t, out var v) ? v : null,
+        DiscoveryEngine = new DefaultDiscoveryEngine(),
+        ConstructorEnumeration = (t) => t.GetConstructors().OrderByDescending(p => p.GetParameters().Length)
     };
 
     /// <summary>
     /// Represents the configuration to use for a <see cref="Pool"/> that can
-    /// resolve a single service type based on its entire inheritance tree and
+    /// resolve a service if it can be assigned to the requested service type.
+    /// </summary>
+    /// <remarks>
+    /// While resolving services using either <see cref="FlexResolve"/> or
+    /// <see cref="FlexRegister"/> generally works the same, semantics between
+    /// them vary in the kind of services that could be registered.
+    /// Using <see cref="FlexResolve"/> may allow multiple services that can
+    /// expose the same service type to be registered, but only the first one
+    /// to match will be resolved.
+    /// </remarks>
+    /// /// <seealso cref="FlexRegister"/>
+    public static readonly PoolConfig FlexResolve = Default with {
+        ActiveResolver = (t, d) => d.Keys.FirstOrDefault(p => p.IsAssignableTo(t)) is {} k ? d[k] : null,
+        FactoryResolver = (t, d) => d.Keys.FirstOrDefault(p => p.IsAssignableTo(t)) is {} k ? d[k] : null
+    };
+
+    /// <summary>
+    /// Represents the configuration to use for a <see cref="Pool"/> that can
+    /// register a single service type based on its entire inheritance tree and
     /// all the interfaces it implements.
     /// </summary>
-    public static readonly PoolConfig Flex = new() {
-        TypeRegistrations = t => [t, ..GetBaseTypes(t), ..t.GetInterfaces()]
+    /// <remarks>
+    /// While resolving services using either <see cref="FlexResolve"/> or
+    /// <see cref="FlexRegister"/> generally works the same, semantics between
+    /// them vary in the kind of services that could be registered.
+    /// Using <see cref="FlexRegister"/> will register the specified service
+    /// type, as well as all of its base classes (except <see cref="object"/>)
+    /// and implemented interfaces.
+    /// </remarks>
+    /// <seealso cref="FlexResolve"/>
+    public static readonly PoolConfig FlexRegister = Default with {
+        TypeRegistrations = t => [t, ..GetBaseTypes(t), ..t.GetInterfaces()],
     };
 
     private static IEnumerable<Type> GetBaseTypes(Type t)

@@ -82,7 +82,7 @@ set of dependencies that need to be specified for that class to function
 correctly. At times, this might be overwhelming, like in the case of classes
 that need several dependencies to be instanced.
 
-There also the issue of respecting the *dependency inversion* **SOLID**
+There's also the issue of respecting the *dependency inversion* **SOLID**
 principle. There's going to be a point where an assembly will just need to know
 the specifics about the classes that need to be instanced and consumed, be it
 during service registration or otherwise. This is allowed on the assembly in

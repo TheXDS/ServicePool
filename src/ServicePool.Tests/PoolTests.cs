@@ -242,7 +242,7 @@ public class PoolTests
     [Test]
     public void Pool_config_supports_flex_registration()
     {
-        var c = PoolConfig.Flex;
+        var c = PoolConfig.FlexResolve;
         var pool = new Pool(c);
         pool.RegisterNow(new Test1());
         Assert.That(pool.Resolve<ITest>(), Is.Not.Null);

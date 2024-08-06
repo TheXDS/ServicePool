@@ -32,6 +32,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
 using System.Runtime.CompilerServices;
+using TheXDS.ServicePool.Extensions;
 using TheXDS.ServicePool.Resources;
 
 namespace TheXDS.ServicePool;
@@ -42,9 +43,22 @@ namespace TheXDS.ServicePool;
 /// resolution type they have registered, and only allowing a single type per
 /// pool to be registered.
 /// </summary>
+/// <param name="config">Pool configuration to use.</param>
 public sealed class Pool(PoolConfig config) : IEnumerable
 {
-    private record FactoryEntry(in bool Persistent, in Func<object> Factory);
+    /// <summary>
+    /// Represents a single entry to create instances of objects during
+    /// uninitialized service resolution.
+    /// </summary>
+    /// <param name="Persistent">
+    /// Value that indicates whether or not the instance being created should
+    /// be persisted on the pool (singleton) or just returned and destroyed
+    /// when exiting its creation scope (transient).
+    /// </param>
+    /// <param name="Factory">
+    /// Factory used to create the new object instance.
+    /// </param>
+    public record FactoryEntry(in bool Persistent, in Func<object> Factory);
 
     private readonly PoolConfig _config = config;
     private readonly Dictionary<Type, FactoryEntry> _factories = [];
@@ -105,7 +119,7 @@ public sealed class Pool(PoolConfig config) : IEnumerable
     public void Register<T>(bool persistent = true) where T : notnull => Register(typeof(T), persistent);
 
     /// <summary>
-    /// _instances and registers a service of type
+    /// Instances and registers a service of type
     /// <typeparamref name="T"/>.
     /// </summary>
     /// <param name="singleton">Singleton instance to register.</param>
@@ -113,7 +127,7 @@ public sealed class Pool(PoolConfig config) : IEnumerable
     public void RegisterNow<T>(T singleton) where T : notnull => RegisterNow((object)singleton);
 
     /// <summary>
-    /// _instances and registers a new service of type
+    /// Instances and registers a new service of type
     /// <typeparamref name="T"/>.
     /// </summary>
     /// <typeparam name="T">Type of service to register.</typeparam>
@@ -185,7 +199,7 @@ public sealed class Pool(PoolConfig config) : IEnumerable
     public object CreateInstance(Type t)
     {
         ConstructorInfo[]? ctors = null;
-        if (t.IsAbstract || t.IsInterface || (ctors = EnumerateCtors(t).ToArray()).Length == 0)
+        if (t.IsAbstract || t.IsInterface || (ctors = _config.ConstructorEnumeration(t).ToArray()).Length == 0)
         {
             throw Errors.TypeNotInstantiable(t);
         }
@@ -376,17 +390,98 @@ public sealed class Pool(PoolConfig config) : IEnumerable
         Register(typeof(T), typeRegistrations, persistent);
     }
 
+    /// <summary>
+    /// Tries to resolve a registered service of type
+    /// <typeparamref name="T"/>, and if not found, searches for any type
+    /// in the app domain that can be instantiated and returned as the
+    /// requested service.
+    /// </summary>
+    /// <typeparam name="T">Type of service to get.</typeparam>
+    /// <returns>
+    /// A registered service or a newly discovered one if it implements the
+    /// requested type, or <see langword="null"/> in case that no
+    /// discoverable service for the requested type exists.
+    /// </returns>
+    /// <remarks>
+    /// When discovering new services, if a service of a specific type is
+    /// found inside the pool, it will be gracefully skipped and not
+    /// instantiated again.
+    /// </remarks>
+    public T? Discover<T>() where T : notnull
+    {
+        return (T?)Discover(typeof(T));
+    }
+
+    /// <summary>
+    /// Tries to resolve a registered service of the specified type, and if not
+    /// found, searches for any type that can be instantiated and returned as
+    /// the requested service.
+    /// </summary>
+    /// <param name="objectType">Type fo service to discover.</param>
+    /// <returns>
+    /// A registered service or a newly discovered one if it implements the
+    /// requested type, or <see langword="null"/> in case that no
+    /// discoverable service for the requested type exists.
+    /// </returns>
+    public object? Discover(Type objectType)
+    {
+        return Resolve(objectType) ?? DiscoverAll(objectType).FirstOrDefault();
+    }
+
+    /// <summary>
+    /// Discovers all the available service instances that implement the specified service type.
+    /// </summary>
+    /// <param name="t">Type of service to discover.</param>
+    /// <returns>
+    /// An enumeration of all discovered services.
+    /// </returns>
+    public IEnumerable<object?> DiscoverAll(Type t)
+    {
+        foreach (Type dt in _config.DiscoveryEngine.Discover(t))
+        {
+            if (Resolve(dt) is null && CreateInstanceOrNull(dt) is { } obj)
+            {
+                yield return obj;
+            }
+        }
+    }
+
+    /// <summary>
+    /// Tries to resolve and register all services of type
+    /// <typeparamref name="T"/> returning the resulting enumeration
+    /// of all services found.
+    /// </summary>
+    /// <typeparam name="T">Type of service to get.</typeparam>
+    /// <returns>
+    /// A collection of all the services found in the current app domain,
+    /// or an empty enumeration in case that no discoverable service for
+    /// the requested type exists.
+    /// </returns>
+    /// <remarks>
+    /// The resulting enumeration will contain all registered services, and
+    /// the discovery will skip any discoverable service for which there's
+    /// a singleton with the same type or a compatible lazy factory
+    /// registered.
+    /// </remarks>
+    public IEnumerable<T> DiscoverAll<T>() where T : notnull
+    {
+        return ((T?[])[Resolve<T>(), .. DiscoverAll(typeof(T)).Cast<T>()]).Where(p => p is not null)!;
+    }
+
     /// <inheritdoc/>
     public IEnumerator GetEnumerator() => _instances.Values.Concat(_factories.Select(CreateFromLazy)).GetEnumerator();
 
     private object? ResolveLazy(Type objectType)
     {
-        return _factories.TryGetValue(objectType, out FactoryEntry? factory) ? CreateFromLazy(objectType, factory) : null;
+        return _config.FactoryResolver.Invoke(objectType, _factories) is { } f
+            ? CreateFromLazy(objectType, f)
+            : null;
     }
 
     private object? ResolveActive(Type objectType)
     {
-        return _instances.TryGetValue(objectType, out var service) ? service : null;
+        if (_config.SelfRegister && objectType == typeof(Pool)) return this;
+        return _config.ActiveResolver.Invoke(objectType, _instances);
     }
 
     private object CreateFromLazy(KeyValuePair<Type, FactoryEntry> entry) => CreateFromLazy(entry.Key, entry.Value);
@@ -409,7 +504,7 @@ public sealed class Pool(PoolConfig config) : IEnumerable
         foreach (ParameterInfo arg in pars)
         {
             var value =
-                (targetType.IsAssignableFrom(arg.ParameterType) ? ResolveActive(arg.ParameterType) : Resolve(arg.ParameterType)) ??
+                (targetType.IsAssignableFrom(arg.ParameterType) ? ResolveActive(arg.ParameterType) : _config.DependencyResolver(this, arg.ParameterType)) ??
                 (arg.IsOptional ? Type.Missing : null);
             if (value is null) break;
             a.Add(value);
@@ -425,15 +520,9 @@ public sealed class Pool(PoolConfig config) : IEnumerable
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    private static IEnumerable<ConstructorInfo> EnumerateCtors(Type t)
-    {
-        return t.GetConstructors().OrderByDescending(p => p.GetParameters().Length);
-    }
-
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     private object? CreateInstance_Internal(Type t)
     {
-        foreach (ConstructorInfo ctor in EnumerateCtors(t))
+        foreach (ConstructorInfo ctor in _config.ConstructorEnumeration(t))
         {
             if (IsValidCtor(ctor, t, out var args))
             {

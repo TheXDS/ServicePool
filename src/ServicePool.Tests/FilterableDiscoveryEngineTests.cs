@@ -40,20 +40,22 @@ public class FilterableDiscoveryEngineTests
     public void Engine_filters_out_unwanted_types_with_params_ctor()
     {
         var e = new FilterableDiscoveryEngine(typeof(InvalidOperationException), typeof(StackOverflowException));
-        Assert.That(e.Discover(typeof(Exception)), Does.Not.Contain(typeof(InvalidOperationException)));
-        Assert.That(e.Discover(typeof(Exception)), Does.Not.Contain(typeof(StackOverflowException)));
-        Assert.That(e.Discover(typeof(Exception)), Contains.Item(typeof(ArgumentException)));
-        Assert.That(e.Discover(typeof(Exception)), Contains.Item(typeof(NullReferenceException)));
+        var result = e.Discover(typeof(Exception)).ToArray();
+        Assert.That(result, Does.Not.Contain(typeof(InvalidOperationException)));
+        Assert.That(result, Does.Not.Contain(typeof(StackOverflowException)));
+        Assert.That(result, Contains.Item(typeof(ArgumentException)));
+        Assert.That(result, Contains.Item(typeof(NullReferenceException)));
     }
 
     [Test]
     public void Engine_filters_out_unwanted_types_with_enumerable_ctor()
     {
         var e = new FilterableDiscoveryEngine(new[] { typeof(InvalidOperationException), typeof(StackOverflowException) }.AsEnumerable());
-        Assert.That(e.Discover(typeof(Exception)), Does.Not.Contain(typeof(InvalidOperationException)));
-        Assert.That(e.Discover(typeof(Exception)), Does.Not.Contain(typeof(StackOverflowException)));
-        Assert.That(e.Discover(typeof(Exception)), Contains.Item(typeof(ArgumentException)));
-        Assert.That(e.Discover(typeof(Exception)), Contains.Item(typeof(NullReferenceException)));
+        var result = e.Discover(typeof(Exception)).ToArray();
+        Assert.That(result, Does.Not.Contain(typeof(InvalidOperationException)));
+        Assert.That(result, Does.Not.Contain(typeof(StackOverflowException)));
+        Assert.That(result, Contains.Item(typeof(ArgumentException)));
+        Assert.That(result, Contains.Item(typeof(NullReferenceException)));
     }
 
     [Test]
@@ -67,10 +69,11 @@ public class FilterableDiscoveryEngineTests
                 typeof(StackOverflowException),
             }
         };
-        Assert.That(e.Discover(typeof(Exception)), Does.Not.Contain(typeof(InvalidOperationException)));
-        Assert.That(e.Discover(typeof(Exception)), Does.Not.Contain(typeof(StackOverflowException)));
-        Assert.That(e.Discover(typeof(Exception)), Contains.Item(typeof(ArgumentException)));
-        Assert.That(e.Discover(typeof(Exception)), Contains.Item(typeof(NullReferenceException)));
+        var result = e.Discover(typeof(Exception)).ToArray();
+        Assert.That(result, Does.Not.Contain(typeof(InvalidOperationException)));
+        Assert.That(result, Does.Not.Contain(typeof(StackOverflowException)));
+        Assert.That(result, Contains.Item(typeof(ArgumentException)));
+        Assert.That(result, Contains.Item(typeof(NullReferenceException)));
     }
 
     [Test]
@@ -84,9 +87,10 @@ public class FilterableDiscoveryEngineTests
                 typeof(StackOverflowException),
             }
         };
-        Assert.That(e.Exclusions, Contains.Item(typeof(InvalidOperationException)));
-        Assert.That(e.Exclusions, Contains.Item(typeof(StackOverflowException)));
-        Assert.That(e.Exclusions, Does.Not.Contain(typeof(ArgumentException)));
-        Assert.That(e.Exclusions, Does.Not.Contain(typeof(NullReferenceException)));
+        var result = e.Discover(typeof(Exception)).ToArray();
+        Assert.That(result, Does.Not.Contain(typeof(InvalidOperationException)));
+        Assert.That(result, Does.Not.Contain(typeof(StackOverflowException)));
+        Assert.That(result, Contains.Item(typeof(ArgumentException)));
+        Assert.That(result, Contains.Item(typeof(NullReferenceException)));
     }
 }

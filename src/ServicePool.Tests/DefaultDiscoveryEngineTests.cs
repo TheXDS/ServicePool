@@ -30,7 +30,6 @@
 
 using NUnit.Framework;
 using System;
-using System.Collections;
 using System.Linq;
 
 namespace TheXDS.ServicePool.Tests;
