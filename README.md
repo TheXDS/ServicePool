@@ -72,8 +72,8 @@ dotnet test ./src/ServicePool.sln --collect:"XPlat Code Coverage" --results-dire
 The coverage reports will be stored in `./Build/Coverage`
 
 ## Contribute
-[![Buy Me A Coffee](https://cdn.buymeacoffee.com/buttons/default-orange.png)](https://www.buymeacoffee.com/xdsxpsivx)
+[![ko-fi](https://ko-fi.com/img/githubbutton_sm.svg)](https://ko-fi.com/W7W415UCHY)
 
-If `ServicePool` is useful to you, or if you're interested in donating to sponsor the project, feel free to to a donation via [PayPal](https://paypal.me/thexds), [BuyMeACoffee](https://www.buymeacoffee.com/xdsxpsivx) or just contact me directly.
+If `ServicePool` is useful to you, or if you're interested in donating to sponsor the project, feel free to to a donation via [PayPal](https://paypal.me/thexds), [Ko-fi](https://ko-fi.com/W7W415UCHY) or just contact me directly.
 
 Sadly, I cannot offer other means of sending donations as of right now due to my country (Honduras) not being supported by almost any platform.
