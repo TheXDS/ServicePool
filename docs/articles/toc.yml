@@ -2,3 +2,5 @@
   href: intro.md
 - name: Dependency Injection Basics
   href: DiBasics.md
+- name: Pool configuration in *ServicePool*
+  href: PoolConfig.md

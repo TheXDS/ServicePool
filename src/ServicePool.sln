@@ -1,4 +1,3 @@
-﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio Version 17
 VisualStudioVersion = 17.0.31912.275
@@ -38,6 +37,26 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Docs", "Docs", "{CE6983D5-6
 		..\README.md = ..\README.md
 	EndProjectSection
 EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "docs", "docs", "{903AFC2B-B980-4832-BAD3-8183337CF55F}"
+	ProjectSection(SolutionItems) = preProject
+		..\docs\docfx.json = ..\docs\docfx.json
+		..\docs\index.md = ..\docs\index.md
+		..\docs\toc.yml = ..\docs\toc.yml
+	EndProjectSection
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "articles", "articles", "{EB9F79DB-73E7-40E2-B5A0-972D1F4A1AA5}"
+	ProjectSection(SolutionItems) = preProject
+		..\docs\articles\DiBasics.md = ..\docs\articles\DiBasics.md
+		..\docs\articles\intro.md = ..\docs\articles\intro.md
+		..\docs\articles\toc.yml = ..\docs\articles\toc.yml
+		PoolConfig.md = PoolConfig.md
+	EndProjectSection
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "api", "api", "{1637DECB-EB8E-4A69-99B4-F12060340697}"
+	ProjectSection(SolutionItems) = preProject
+		..\docs\api\index.md = ..\docs\api\index.md
+	EndProjectSection
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -61,6 +80,9 @@ Global
 		{D42A0F58-A6F8-4D17-910F-8863C2EDB908} = {A59AF99D-224F-4B6F-A8B5-4BDEB5172C40}
 		{610BBFFB-425B-4851-AC34-5CD62F74BA88} = {84FA27A2-77B8-443F-B0FC-8493E3A373F6}
 		{CE6983D5-6C0D-4C91-836E-7D8A740E8028} = {84FA27A2-77B8-443F-B0FC-8493E3A373F6}
+		{903AFC2B-B980-4832-BAD3-8183337CF55F} = {CE6983D5-6C0D-4C91-836E-7D8A740E8028}
+		{EB9F79DB-73E7-40E2-B5A0-972D1F4A1AA5} = {903AFC2B-B980-4832-BAD3-8183337CF55F}
+		{1637DECB-EB8E-4A69-99B4-F12060340697} = {903AFC2B-B980-4832-BAD3-8183337CF55F}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {AFDF6DE6-FFE0-4906-88E0-FAB69F5D5DDE}
