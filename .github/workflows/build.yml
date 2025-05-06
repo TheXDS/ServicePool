@@ -17,9 +17,9 @@ jobs:
       Configuration: Debug
     steps:
     - name: Checkout
-      uses: actions/checkout@v3
+      uses: actions/checkout@v4
     - name: Install .NET Core
-      uses: actions/setup-dotnet@v3
+      uses: actions/setup-dotnet@v4
       with:
         dotnet-version: 8.0.x
     - name: Install Codecov
@@ -32,7 +32,7 @@ jobs:
         CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
     - name: Create NuGet Packages
       run: dotnet pack $env:Solution_Name --configuration=$env:Configuration --version-suffix=$env:GITHUB_SHA --include-source -p:RepositoryBranch=${{ github.ref }} -p:RepositoryCommit=${{ github.sha }} -p:ContinuousIntegrationBuild=true
-    - uses: actions/upload-artifact@v3
+    - uses: actions/upload-artifact@v4
       with:
         name: ServicePool-nuget-packages
         path: Build/Bin/**/*.nupkg
