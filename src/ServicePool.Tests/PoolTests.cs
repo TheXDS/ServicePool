@@ -266,6 +266,22 @@ public class PoolTests
     }
 
     [Test]
+    public void Resolve_resolves_for_method_registration()
+    {
+        Pool? pool = new();
+        pool.Register(() => new Test1());
+        Assert.That(pool.Resolve<Test1>(), Is.Not.Null);
+    }
+
+    [Test]
+    public void Resolve_resolves_for_base_type_for_method_registration()
+    {
+        Pool? pool = new();
+        pool.Register<ITest>(() => new Test1());
+        Assert.That(pool.Resolve<ITest>(), Is.Not.Null);
+    }
+
+    [Test]
     public void Resolve_resolves_for_base_class()
     {
         Pool? pool = new();
