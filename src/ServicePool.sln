@@ -28,6 +28,7 @@ EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Workflows", "Workflows", "{610BBFFB-425B-4851-AC34-5CD62F74BA88}"
 	ProjectSection(SolutionItems) = preProject
 		..\.github\workflows\build.yml = ..\.github\workflows\build.yml
+		..\.github\workflows\docfx.yml = ..\.github\workflows\docfx.yml
 		..\.github\workflows\publish.yml = ..\.github\workflows\publish.yml
 	EndProjectSection
 EndProject
@@ -48,8 +49,8 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "articles", "articles", "{EB
 	ProjectSection(SolutionItems) = preProject
 		..\docs\articles\DiBasics.md = ..\docs\articles\DiBasics.md
 		..\docs\articles\intro.md = ..\docs\articles\intro.md
-		..\docs\articles\toc.yml = ..\docs\articles\toc.yml
 		PoolConfig.md = PoolConfig.md
+		..\docs\articles\toc.yml = ..\docs\articles\toc.yml
 	EndProjectSection
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "api", "api", "{1637DECB-EB8E-4A69-99B4-F12060340697}"
