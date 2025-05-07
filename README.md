@@ -15,7 +15,7 @@ The dependency injection model implemented by this library also adds a bit more 
 Release | Link
 --- | ---
 Latest public release: | [![Latest stable NuGet package](https://img.shields.io/nuget/v/TheXDS.ServicePool)](https://www.nuget.org/packages/TheXDS.ServicePool/)  
-Latest development release: | [![Latest development NuGet package](https://img.shields.io/nuget/vpre/TheXDS.ServicePool/)](https://www.nuget.org/stats/packages/TheXDS.ServicePool?groupby=Version)
+Latest development release: | [![Latest development NuGet package](https://img.shields.io/nuget/vpre/TheXDS.ServicePool)](https://www.nuget.org/stats/packages/TheXDS.ServicePool?groupby=Version)
 
 **Package Manager**  
 ```sh
