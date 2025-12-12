@@ -13,7 +13,7 @@ jobs:
   build:
     runs-on: windows-latest
     env:
-      Solution_Name: src/ServicePool.sln
+      Solution_Name: src/ServicePool.slnx
       Configuration: Debug
     steps:
     - name: Checkout

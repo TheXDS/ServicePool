@@ -50,13 +50,13 @@ ServicePool can be built on any platform or CI environment supported by dotnet.
 
 ### Build ServicePool
 ```sh
-dotnet build ./src/ServicePool.sln
+dotnet build ./src/ServicePool.slnx
 ```
 The resulting binaries will be in the `./Build/bin` directory.
 
 ### Testing ServicePool
 ```sh
-dotnet test ./src/ServicePool.sln
+dotnet test ./src/ServicePool.slnx
 ```
 #### Coverage reports
 It is possible to generate a coverage report locally. For that, it is necessary to install [`ReportGenerator`](https://github.com/danielpalme/ReportGenerator), which will read the test results after execution, and will generate a web page with the coverage results.
@@ -67,7 +67,7 @@ dotnet tool install -g dotnet-reportgenerator-globaltool
 ```
 After installing `ReportGenerator`, it will be possible to execute the following command:
 ```sh
-dotnet test ./src/ServicePool.sln --collect:"XPlat Code Coverage" --results-directory:./Build/Tests ; reportgenerator -reports:./Build/Tests/*/coverage.cobertura.xml -targetdir:./Build/Coverage/
+dotnet test ./src/ServicePool.slnx --collect:"XPlat Code Coverage" --results-directory:./Build/Tests ; reportgenerator -reports:./Build/Tests/*/coverage.cobertura.xml -targetdir:./Build/Coverage/
 ```
 The coverage reports will be stored in `./Build/Coverage`
 

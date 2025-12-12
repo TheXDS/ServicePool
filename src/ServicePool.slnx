@@ -1,0 +1,40 @@
+<Solution>
+  <Folder Name="/Solution Items/">
+    <File Path=".editorconfig" />
+  </Folder>
+  <Folder Name="/Solution Items/BuildTargets/">
+    <File Path="Directory.Build.props" />
+    <File Path="Directory.Build.targets" />
+  </Folder>
+  <Folder Name="/Solution Items/BuildTargets/Included files/">
+    <File Path="../BuildTargets/BuildPaths.props" />
+    <File Path="../BuildTargets/CompileOptions.targets" />
+    <File Path="../BuildTargets/PackageInfo.props" />
+    <File Path="../BuildTargets/PackageVersion.props" />
+  </Folder>
+  <Folder Name="/Solution Items/Docs/">
+    <File Path="../LICENSE" />
+    <File Path="../README.md" />
+  </Folder>
+  <Folder Name="/Solution Items/Docs/docs/">
+    <File Path="../docs/docfx.json" />
+    <File Path="../docs/index.md" />
+    <File Path="../docs/toc.yml" />
+  </Folder>
+  <Folder Name="/Solution Items/Docs/docs/api/">
+    <File Path="../docs/api/index.md" />
+  </Folder>
+  <Folder Name="/Solution Items/Docs/docs/articles/">
+    <File Path="../docs/articles/DiBasics.md" />
+    <File Path="../docs/articles/intro.md" />
+    <File Path="../docs/articles/toc.yml" />
+    <File Path="PoolConfig.md" />
+  </Folder>
+  <Folder Name="/Solution Items/Workflows/">
+    <File Path="../.github/workflows/build.yml" />
+    <File Path="../.github/workflows/docfx.yml" />
+    <File Path="../.github/workflows/publish.yml" />
+  </Folder>
+  <Project Path="ServicePool.Tests/ServicePool.Tests.csproj" />
+  <Project Path="ServicePool/ServicePool.csproj" />
+</Solution>
