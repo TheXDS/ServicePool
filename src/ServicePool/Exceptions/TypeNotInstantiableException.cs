@@ -76,4 +76,3 @@ public class TypeNotInstantiableException : Exception
         OffendingType = offendingType;
     }
 }
-

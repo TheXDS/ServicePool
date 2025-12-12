@@ -27,9 +27,7 @@
 // SOFTWARE.
 
 using System;
-using System.Collections;
 using TheXDS.ServicePool.Exceptions;
-using Ers = TheXDS.ServicePool.Resources.Strings.Errors;
 
 namespace TheXDS.ServicePool.Resources;
 

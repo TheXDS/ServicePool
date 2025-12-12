@@ -32,7 +32,6 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
 using System.Runtime.CompilerServices;
-using TheXDS.ServicePool.Extensions;
 using TheXDS.ServicePool.Resources;
 
 namespace TheXDS.ServicePool;
@@ -199,12 +198,12 @@ public sealed class Pool(PoolConfig config) : IEnumerable
     public object CreateInstance(Type t)
     {
         ConstructorInfo[]? ctors = null;
-        if (t.IsAbstract || t.IsInterface || (ctors = _config.ConstructorEnumeration(t).ToArray()).Length == 0)
+        if (t.IsAbstract || t.IsInterface || (ctors = [.. _config.ConstructorEnumeration(t)]).Length == 0)
         {
             throw Errors.TypeNotInstantiable(t);
         }
         return CreateInstance_Internal(t) 
-            ?? throw Errors.MissingDependency(ctors.Select(q => q.GetParameters()).Select(p => p.Select(r => r.ParameterType).ToArray()).ToArray());
+            ?? throw Errors.MissingDependency([.. ctors.Select(q => q.GetParameters()).Select(p => p.Select(r => r.ParameterType).ToArray())]);
     }
 
     /// <summary>

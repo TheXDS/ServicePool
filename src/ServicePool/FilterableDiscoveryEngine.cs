@@ -33,11 +33,20 @@ using System.Linq;
 namespace TheXDS.ServicePool;
 
 /// <summary>
-/// Implements a <see cref="IDiscoveryEngine"/> that searches for types in the current <see cref="AppDomain"/>, but excludes the types explicitly added to a list of exclusions.
+/// Implements a <see cref="IDiscoveryEngine"/> that searches for types in the
+/// current <see cref="AppDomain"/>, but excludes the types explicitly added to
+/// a list of exclusions.
 /// </summary>
-public class FilterableDiscoveryEngine : IDiscoveryEngine
+/// <remarks>
+/// Initializes a new instance of the
+/// <see cref="FilterableDiscoveryEngine"/> class.
+/// </remarks>
+/// <param name="exclusions">
+/// Types to be excluded from the search when discovering types.
+/// </param>
+public class FilterableDiscoveryEngine(IEnumerable<Type>? exclusions) : IDiscoveryEngine
 {
-    private readonly HashSet<Type> _exclusions;
+    private readonly HashSet<Type> _exclusions = [.. exclusions ?? []];
     private readonly IDiscoveryEngine _engine = new DefaultDiscoveryEngine();
 
     /// <summary>
@@ -46,18 +55,6 @@ public class FilterableDiscoveryEngine : IDiscoveryEngine
     /// </summary>
     public FilterableDiscoveryEngine() : this((IEnumerable<Type>?)null)
     {
-    }
-
-    /// <summary>
-    /// Initializes a new instance of the
-    /// <see cref="FilterableDiscoveryEngine"/> class.
-    /// </summary>
-    /// <param name="exclusions">
-    /// Types to be excluded from the search when discovering types.
-    /// </param>
-    public FilterableDiscoveryEngine(IEnumerable<Type>? exclusions)
-    {
-        _exclusions = new(exclusions ?? Array.Empty<Type>());
     }
 
     /// <summary>

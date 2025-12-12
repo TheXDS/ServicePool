@@ -1,4 +1,4 @@
-// DiscoverySupportExtensions.cs
+// SugarExtensions.cs
 //
 // This file is part of ServicePool
 //
