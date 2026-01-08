@@ -28,15 +28,11 @@
 
 #pragma warning disable CS1591
 
-using NUnit.Framework;
-using System;
 using System.Collections;
-using System.Linq;
-using System.Reflection;
 using TheXDS.ServicePool.Exceptions;
 using TheXDS.ServicePool.TestTypes;
 
-namespace TheXDS.ServicePool.Tests;
+namespace TheXDS.ServicePool;
 
 public class PoolTests
 {

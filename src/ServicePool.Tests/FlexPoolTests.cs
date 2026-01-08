@@ -28,12 +28,9 @@
 
 #pragma warning disable CS1591
 
-using NUnit.Framework;
-using System;
-using System.Linq;
 using TheXDS.ServicePool.TestTypes;
 
-namespace TheXDS.ServicePool.Tests;
+namespace TheXDS.ServicePool;
 
 public class FlexPoolTests
 {

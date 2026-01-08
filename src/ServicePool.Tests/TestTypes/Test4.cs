@@ -29,7 +29,6 @@
 #pragma warning disable CS1591
 #pragma warning disable IDE0290
 
-using System;
 using System.Diagnostics.CodeAnalysis;
 
 namespace TheXDS.ServicePool.TestTypes;

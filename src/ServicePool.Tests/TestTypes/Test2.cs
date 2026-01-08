@@ -28,7 +28,6 @@
 
 #pragma warning disable CS1591
 
-using NUnit.Framework;
 using System.Diagnostics.CodeAnalysis;
 
 namespace TheXDS.ServicePool.TestTypes;

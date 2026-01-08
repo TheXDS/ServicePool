@@ -28,11 +28,7 @@
 
 #pragma warning disable CS1591
 
-using NUnit.Framework;
-using System;
-using System.Reflection;
-
-namespace TheXDS.ServicePool.Tests;
+namespace TheXDS.ServicePool;
 
 public class AssemblyListDiscoveryEngineTests
 {

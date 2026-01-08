@@ -28,12 +28,10 @@
 
 #pragma warning disable CS1591
 
-using NUnit.Framework;
-using System;
 using System.Diagnostics.CodeAnalysis;
 using TheXDS.ServicePool.Extensions;
 
-namespace TheXDS.ServicePool.Tests;
+namespace TheXDS.ServicePool;
 
 public class SugarExtensionsTests
 {

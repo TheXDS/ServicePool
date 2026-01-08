@@ -1,4 +1,4 @@
-﻿// Test1.cs
+﻿// MissingDependencyExceptionTests.cs
 //
 // This file is part of ServicePool
 //
@@ -26,17 +26,21 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-#pragma warning disable CS1591
+using TheXDS.ServicePool.Exceptions;
 
-using System.Diagnostics.CodeAnalysis;
+namespace TheXDS.ServicePool;
 
-namespace TheXDS.ServicePool.TestTypes;
-
-[ExcludeFromCodeCoverage]
-public class Test1 : ITest
+internal class MissingDependencyExceptionTests
 {
-    public void Test()
+    [Test]
+    public void Ctor_full_parameters_initializes_properties()
     {
-        Assert.Pass();
+        var ex = new MissingDependencyException([[typeof(int), typeof(string)]], "Test message", new InvalidProgramException());
+        using (Assert.EnterMultipleScope())
+        {
+            Assert.That(ex.MissingDependencies, Is.EqualTo((Type[][])[[typeof(int), typeof(string)]]));
+            Assert.That(ex.Message, Is.EqualTo("Test message"));
+            Assert.That(ex.InnerException, Is.TypeOf<InvalidProgramException>());
+        }
     }
 }
