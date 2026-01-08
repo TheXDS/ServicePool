@@ -105,7 +105,9 @@ public readonly record struct PoolConfig
     /// them vary in the kind of services that could be registered.
     /// Using <see cref="FlexResolve"/> may allow multiple services that can
     /// expose the same service type to be registered, but only the first one
-    /// to match will be resolved.
+    /// to match will be resolved. This might be useful when "consuming"
+    /// services, where each one gets removed from the pool after being
+    /// resolved.
     /// </remarks>
     /// /// <seealso cref="FlexRegister"/>
     public static readonly PoolConfig FlexResolve = Default with {
@@ -124,7 +126,9 @@ public readonly record struct PoolConfig
     /// them vary in the kind of services that could be registered.
     /// Using <see cref="FlexRegister"/> will register the specified service
     /// type, as well as all of its base classes (except <see cref="object"/>)
-    /// and implemented interfaces.
+    /// and implemented interfaces. This will have the effect of disallowing
+    /// multiple services that can expose the same service type to be
+    /// registered.
     /// </remarks>
     /// <seealso cref="FlexResolve"/>
     public static readonly PoolConfig FlexRegister = Default with {

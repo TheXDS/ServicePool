@@ -38,7 +38,7 @@ namespace TheXDS.ServicePool.Tests;
 public class FlexPoolTests
 {
     [Test]
-    public void Resolve_resolves_for_interfaces()
+    public void Resolve_with_FlexResolve_resolves_for_interfaces()
     {
         Pool pool = new(PoolConfig.FlexResolve);
         pool.Register<Test1>();
@@ -46,12 +46,29 @@ public class FlexPoolTests
     }
 
     [Test]
-    public void Resolve_resolves_for_base_class()
+    public void Resolve_with_FlexResolve_resolves_for_base_class()
     {
         Pool pool = new(PoolConfig.FlexResolve);
         pool.Register<Test3>();
         Assert.That(pool.Resolve<Test1>(), Is.Not.Null);
     }
+
+    [Test]
+    public void Resolve_with_FlexRegister_resolves_for_interfaces()
+    {
+        Pool pool = new(PoolConfig.FlexRegister);
+        pool.Register<Test1>();
+        Assert.That(pool.Resolve<ITest>(), Is.Not.Null);
+    }
+
+    [Test]
+    public void Resolve_with_FlexRegister_resolves_for_base_class()
+    {
+        Pool pool = new(PoolConfig.FlexRegister);
+        pool.Register<Test3>();
+        Assert.That(pool.Resolve<Test1>(), Is.Not.Null);
+    }
+
 
     [Test]
     public void Discover_searches_for_service()
