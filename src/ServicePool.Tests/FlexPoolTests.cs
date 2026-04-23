@@ -66,7 +66,6 @@ public class FlexPoolTests
         Assert.That(pool.Resolve<Test1>(), Is.Not.Null);
     }
 
-
     [Test]
     public void Discover_searches_for_service()
     {
